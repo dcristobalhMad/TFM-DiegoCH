@@ -7,7 +7,7 @@ build-lambda:
 check: build-lambda
 	cd Infrastructure && pulumi preview
 
-deploy:
+deploy: build-lambda
 	cd Infrastructure && pulumi up
 
 destroy:
