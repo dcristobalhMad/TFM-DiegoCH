@@ -19,7 +19,6 @@ jobs:
       - run: go mod download
         working-directory: ./Infrastructure
       - uses: pulumi/actions@v3
-        working-directory: ./Infrastructure
         with:
           work-dir: ./Infrastructure
           command: preview
