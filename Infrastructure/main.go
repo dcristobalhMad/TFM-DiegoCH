@@ -48,7 +48,7 @@ func main() {
         // Create a Lambda function for data transformation
         dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
             Runtime: lambda.RuntimeGo1dx,
-            Code:    pulumi.NewFileArchive("./lambda_function.zip"),
+            Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
             Handler: pulumi.String("main"),
             Role:    lambdaRole.Arn,
         })
