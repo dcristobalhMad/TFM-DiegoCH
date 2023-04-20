@@ -22,6 +22,8 @@ jobs:
       - uses: pulumi/actions@v3
         with:
           comment-on-pr: true
+          github-token: ${{ github.token }}
+          color: always
           work-dir: ./Infrastructure
           command: preview
           stack-name: dcristobalh/Infrastructure/prod # When using an individual account, only use stack-name.
