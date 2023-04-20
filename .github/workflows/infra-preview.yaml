@@ -18,8 +18,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - run: go mod download
       - uses: pulumi/actions@v3
-        working-directory: ./Infrastructure
         with:
+          work-dir: ./Infrastructure
           command: preview
           stack-name: dcristobalh/Infrastructure/prod # When using an individual account, only use stack-name.
         env:
