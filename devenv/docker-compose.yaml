@@ -5,6 +5,7 @@ services:
     image: haproxy:2.4.2
     ports:
       - "8100:8100"
+      - "8989:8989"
     volumes:
       - ./haproxy:/usr/local/etc/haproxy
   goapp1:
