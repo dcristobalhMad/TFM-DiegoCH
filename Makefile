@@ -1,3 +1,8 @@
+SHELL := /bin/bash
+
+.PHONY: build-lambda check deploy destroy
+.SILENT: build-lambda check deploy destroy
+
 # Build Lambda function
 build-lambda:
 	cd Infrastructure/lambda && GOOS=linux go build -o bin/main main.go
