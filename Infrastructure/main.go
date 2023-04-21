@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/lambda"
@@ -79,15 +81,30 @@ func main() {
         // Create a Kinesis Firehose Delivery Stream with data transformation Lambda
         firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
             Destination: pulumi.String("extended_s3"),
-            ExtendedS3Configuration: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
-                BucketArn: s3Bucket.Arn,
-                RoleArn:   firehoseRole.Arn,
-                Prefix:    pulumi.String("stream_data/"),
-            },
-        })
-        if err != nil {
-            return err
-        }
+            ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
+				RoleArn:   firehoseRole.Arn,
+				BucketArn: s3Bucket.Arn,
+				ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
+					Enabled: pulumi.Bool(true),
+					Processors: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArray{
+						&kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArgs{
+							Type: pulumi.String("Lambda"),
+							Parameters: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorParameterArray{
+								&kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorParameterArgs{
+									ParameterName: pulumi.String("LambdaArn"),
+									ParameterValue: dataTransformLambda.Arn.ApplyT(func(arn string) (string, error) {
+										return fmt.Sprintf("%v:$LATEST", arn), nil
+									}).(pulumi.StringOutput),
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
 
         // Stack exports
         ctx.Export("bucketName", s3Bucket.Bucket)
