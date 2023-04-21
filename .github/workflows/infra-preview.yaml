@@ -3,7 +3,7 @@ on:
   - pull_request
 jobs:
   golangci:
-    name: lint
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v4
@@ -36,7 +36,7 @@ jobs:
           # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
           skip-build-cache: true
   preview:
-    name: Preview
+    name: pulumi-preview
     needs: golangci
     runs-on: ubuntu-latest
     steps:
