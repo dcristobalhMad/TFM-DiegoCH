@@ -20,6 +20,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - run: go mod download
         working-directory: ./Infrastructure
+      - run: make build-lambda
       - uses: pulumi/actions@v3
         with:
           command: up
