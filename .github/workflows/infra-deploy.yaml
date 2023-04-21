@@ -24,6 +24,7 @@ jobs:
       - uses: pulumi/actions@v3
         with:
           command: up
+          color: always
           work-dir: ./Infrastructure
           stack-name: dcristobalh/Infrastructure/prod
         env:
