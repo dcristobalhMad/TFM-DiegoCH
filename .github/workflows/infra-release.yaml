@@ -4,8 +4,7 @@ on: # yamllint disable-line rule:truthy
   push:
     tags:
       - "*"
-    tags-ignore:
-      - "*destroy*"
+      - "!*destroy*"
 
 jobs:
   release:
