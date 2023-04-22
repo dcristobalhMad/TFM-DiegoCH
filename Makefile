@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-.PHONY: build-lambda check deploy destroy
-.SILENT: build-lambda check deploy destroy
+.PHONY: build-lambda check deploy destroy dev-up dev-down
+.SILENT: build-lambda check deploy destroy dev-up dev-down
 
 # Build Lambda function
 build-lambda:
@@ -17,3 +17,10 @@ deploy: build-lambda
 
 destroy:
 	cd Infrastructure && pulumi destroy
+
+# Dev environment
+dev-up:
+	docker compose -f devenv/docker-compose.yaml up -d
+
+dev-down:
+	docker compose -f devenv/docker-compose.yaml down
