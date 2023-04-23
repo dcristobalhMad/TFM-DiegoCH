@@ -24,7 +24,14 @@ jobs:
       - uses: pulumi/actions@v3
         with:
           command: up
+          color: always
           work-dir: ./Infrastructure
           stack-name: dcristobalh/Infrastructure/prod
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.55.0 # Don't use @master unless you're happy to test the latest version
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TAG }}
+          WITH_V: false
+          DEFAULT_BUMP: patch

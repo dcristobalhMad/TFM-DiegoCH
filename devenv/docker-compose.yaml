@@ -1,0 +1,36 @@
+version: "2"
+
+services:
+  elb:
+    image: haproxy:2.4.2
+    ports:
+      - "8100:8100"
+      - "8989:8989"
+    links:
+      - fluentd
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy
+
+  fluentd:
+    build: ./fluentd
+    volumes:
+      - ./fluentd/conf:/fluentd/etc
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+  goapp1:
+    build: ./goapp
+    environment:
+      - APPPORT=8081
+  goapp2:
+    build: ./goapp
+    environment:
+      - APPPORT=8082
+  goapp3:
+    build: ./goapp
+    environment:
+      - APPPORT=8083
