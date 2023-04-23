@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - Infrastructure/**
 jobs:
   update:
     name: Desploy/update-infra
