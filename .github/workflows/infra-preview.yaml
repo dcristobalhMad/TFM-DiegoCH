@@ -1,6 +1,8 @@
 name: Pulumi
 on:
-  - pull_request
+  pull_request:
+    paths:
+      - Infrastructure/**
 jobs:
   golangci:
     name: golangci-lint
