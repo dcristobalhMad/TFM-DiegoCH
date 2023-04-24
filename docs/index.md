@@ -5,9 +5,7 @@ hide:
 
 # **Infraestructura del trabajo de fin de máster de Diego Cristóbal Herreros para la Universidad Alfonso X de Madrid**
 
-<p align="center">
-  <img src="/images/Logo-UAX.png">
-</p>
+![Logo-UAX](images/Logo-UAX.png)
 
 **\*Nota**: Este proyecto es la infraestructura, el flow completo del dato se explica en la literatura del trabajo\*
 
