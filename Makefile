@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-.PHONY: build-lambda check deploy destroy dev-up dev-down
-.SILENT: build-lambda check deploy destroy dev-up dev-down
+.PHONY: build-lambda check deploy destroy dev-up dev-down docs
+.SILENT: build-lambda check deploy destroy dev-up dev-down docs
 
 # Build Lambda function
 build-lambda:
@@ -24,3 +24,7 @@ dev-up:
 
 dev-down:
 	docker compose -f devenv/docker-compose.yaml down
+
+# Run mkdocs url
+docs:
+	mkdocs serve
