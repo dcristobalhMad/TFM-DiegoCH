@@ -1,4 +1,4 @@
-name: Pulumi
+name: Pulumi-destroy
 on:
   push:
     # Sequence of patterns matched against refs/tags
