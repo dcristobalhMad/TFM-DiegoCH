@@ -14,7 +14,7 @@ nav:
   - Sobre el proyecto: "about.md"
 plugins:
   - search:
-      lang: en
+      lang: es
 theme:
   name: material
   palette:
@@ -27,7 +27,7 @@ theme:
     - navigation.footer
   icon:
     repo: fontawesome/brands/github
-language: es
+  language: es
 extra:
   social:
     - icon: fontawesome/brands/github
