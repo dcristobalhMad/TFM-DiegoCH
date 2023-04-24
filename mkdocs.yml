@@ -1,0 +1,38 @@
+site_name: TFM - UAX - Diego Cristóbal Herreros
+#site_url:
+site_description: Project documentation with Markdown.
+site_author: Diego Cristóbal Herreros
+repo_name: dcristobalhMad/TFM-DiegoCH
+
+repo_url: https://github.com/dcristobalhMad/TFM-DiegoCH
+nav:
+  - Inicio: "index.md"
+  - Objetivos: "objetivos.md"
+  - Tecnologías: "tecnologias.md"
+  - Arquitectura: "arquitectura.md"
+  - Entorno de desarrollo: "entorno.md"
+  - Sobre el proyecto: "about.md"
+plugins:
+  - search:
+      lang: en
+theme:
+  name: material
+  palette:
+    primary: orange
+  font:
+    text: Roboto
+  features:
+    - navigation.tabs
+    - header.autohide
+    - navigation.footer
+  icon:
+    repo: fontawesome/brands/github
+language: es
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dcristobalhMad
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/diego-cristobal-herreros-60886a80/
+
+copyright: Copyright &copy; 2022 - 2023 Diego Cristóbal Herreros
