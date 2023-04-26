@@ -123,6 +123,7 @@ func main() {
 			Name:    pulumi.String("dataTransformLambda"),
 			Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
 			Handler: pulumi.String("main"),
+			Timeout: pulumi.Int(60),
 			Role:    lambdaRole.Arn,
 		})
 		if err != nil {
