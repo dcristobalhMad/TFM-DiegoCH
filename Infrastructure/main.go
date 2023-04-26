@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/lambda"
@@ -11,25 +12,75 @@ import (
 )
 
 func main() {
-    pulumi.Run(func(ctx *pulumi.Context) error {
+	pulumi.Run(func(ctx *pulumi.Context) error {
 
-        // Create an S3 bucket to store the Kinesis data
-        s3Bucket, err := s3.NewBucket(ctx, "mydatalake", nil)
-        if err != nil {
-            return err
-        }
+		// Create an S3 bucket to store the Kinesis data
+		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", nil)
+		if err != nil {
+			return err
+		}
+		// Create glue catalog table
+		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
+			DatabaseName: pulumi.String("awsGlueCatalogDatabase"),
+			Name:         pulumi.String("mytable"),
+			Parameters: pulumi.StringMap{
+				"EXTERNAL":            pulumi.String("TRUE"),
+				"parquet.compression": pulumi.String("SNAPPY"),
+			},
+			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
+				Columns: glue.CatalogTableStorageDescriptorColumnArray{
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("my_string"),
+						Type: pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("my_double"),
+						Type: pulumi.String("double"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String(""),
+						Name:    pulumi.String("my_date"),
+						Type:    pulumi.String("date"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String(""),
+						Name:    pulumi.String("my_bigint"),
+						Type:    pulumi.String("bigint"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String(""),
+						Name:    pulumi.String("my_struct"),
+						Type:    pulumi.String("struct<my_nested_string:string>"),
+					},
+				},
+				InputFormat:  pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"),
+				Location:     pulumi.String("s3://my-bucket/event-streams/my-stream"),
+				OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
+				SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
+					Name: pulumi.String("my-stream"),
+					Parameters: pulumi.StringMap{
+						"serialization.format": pulumi.String("1"),
+					},
+					SerializationLibrary: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"),
+				},
+			},
+			TableType: pulumi.String("EXTERNAL_TABLE"),
+		})
+		if err != nil {
+			return err
+		}
 
-        // Create a Kinesis Data Stream
-        dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
-            ShardCount: pulumi.Int(1),
-        })
-        if err != nil {
-            return err
-        }
+		// Create a Kinesis Data Stream
+		dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
+			ShardCount: pulumi.Int(1),
+		})
+		if err != nil {
+			return err
+		}
 
-        // Create a Lambda IAM role
-        lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
-            AssumeRolePolicy: pulumi.String(`{
+		// Create a Lambda IAM role
+		lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
+			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
                     {
@@ -42,25 +93,25 @@ func main() {
                     }
                 ]
             }`),
-        })
-        if err != nil {
-            return err
-        }
+		})
+		if err != nil {
+			return err
+		}
 
-        // Create a Lambda function for data transformation
-        dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
-            Runtime: lambda.RuntimeGo1dx,
-            Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
-            Handler: pulumi.String("main"),
-            Role:    lambdaRole.Arn,
-        })
-        if err != nil {
-            return err
-        }
+		// Create a Lambda function for data transformation
+		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
+			Runtime: lambda.RuntimeGo1dx,
+			Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
+			Handler: pulumi.String("main"),
+			Role:    lambdaRole.Arn,
+		})
+		if err != nil {
+			return err
+		}
 
-        // Create a Kinesis Firehose IAM role
-        firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
-            AssumeRolePolicy: pulumi.String(`{
+		// Create a Kinesis Firehose IAM role
+		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
+			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
                     {
@@ -73,15 +124,15 @@ func main() {
                     }
                 ]
             }`),
-        })
-        if err != nil {
-            return err
-        }
+		})
+		if err != nil {
+			return err
+		}
 
-        // Create a Kinesis Firehose Delivery Stream with data transformation Lambda
-        firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
-            Destination: pulumi.String("extended_s3"),
-            ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
+		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
+		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
+			Destination: pulumi.String("extended_s3"),
+			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
 				RoleArn:   firehoseRole.Arn,
 				BucketArn: s3Bucket.Arn,
 				ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
@@ -106,14 +157,15 @@ func main() {
 			return err
 		}
 
-        // Stack exports
-        ctx.Export("bucketName", s3Bucket.Bucket)
-        ctx.Export("kinesisDataStreamName", dataStream.Name)
-        ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
-        ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
-        ctx.Export("lambdaRoleName", lambdaRole.Name)
-        ctx.Export("firehoseRoleName", firehoseRole.Name)
+		// Stack exports
+		ctx.Export("bucketName", s3Bucket.Bucket)
+		ctx.Export("kinesisDataStreamName", dataStream.Name)
+		ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
+		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
+		ctx.Export("lambdaRoleName", lambdaRole.Name)
+		ctx.Export("firehoseRoleName", firehoseRole.Name)
+		ctx.Export("glueTableName", catalogTable.Name)
 
-        return nil
-    })
+		return nil
+	})
 }
