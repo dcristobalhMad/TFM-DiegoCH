@@ -19,10 +19,17 @@ func main() {
 		if err != nil {
 			return err
 		}
-		// Create glue catalog table
+		// Create a Glue catalog database
+		catalogDatabase, err := glue.NewCatalogDatabase(ctx, "awsGlueCatalogDatabase", &glue.CatalogDatabaseArgs{
+			Name: pulumi.String("tfmcatalogdatabase"),
+		})
+		if err != nil {
+			return err
+		}
+		// Create Glue catalog table
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: pulumi.String("awsGlueCatalogDatabase"),
-			Name:         pulumi.String("mytable"),
+			Name:         pulumi.String("tfmttable"),
 			Parameters: pulumi.StringMap{
 				"EXTERNAL":            pulumi.String("TRUE"),
 				"parquet.compression": pulumi.String("SNAPPY"),
@@ -72,6 +79,7 @@ func main() {
 
 		// Create a Kinesis Data Stream
 		dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
+			Name:       pulumi.String("tfm-stream"),
 			ShardCount: pulumi.Int(1),
 		})
 		if err != nil {
@@ -164,6 +172,7 @@ func main() {
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
 		ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
+		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableName", catalogTable.Name)
 
 		return nil
