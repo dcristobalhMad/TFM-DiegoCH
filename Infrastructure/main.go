@@ -41,8 +41,10 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Create variables
+		s3BucketName := s3Bucket.ID()
+		kinesisStreamName := dataStream.Name
 		// Create Glue catalog table
-		buildBucketPath := fmt.Sprintf("s3://%s/event-streams/%s", s3Bucket.Bucket, dataStream.Name)
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: catalogDatabase.Name,
 			Name:         pulumi.String("tfmttable"),
@@ -78,7 +80,7 @@ func main() {
 				},
 				// Input format should be raw
 				InputFormat:  pulumi.String("org.apache.hadoop.mapred.TextInputFormat"),
-				Location:     pulumi.String(buildBucketPath),
+				Location:     pulumi.Sprintf("s3://%s/event-streams/%s", s3BucketName, kinesisStreamName),
 				OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
 				SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
 					Name: dataStream.Name,
