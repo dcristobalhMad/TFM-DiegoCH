@@ -25,6 +25,15 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Create a Kinesis Data Stream
+		dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
+			Name:       pulumi.String("tfm-stream"),
+			ShardCount: pulumi.Int(1),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Glue catalog database
 		catalogDatabase, err := glue.NewCatalogDatabase(ctx, "awsGlueCatalogDatabase", &glue.CatalogDatabaseArgs{
 			Name: pulumi.String("tfmcatalogdatabase"),
@@ -32,9 +41,12 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Create variables
+		s3BucketName := s3Bucket.ID()
+		kinesisStreamName := dataStream.Name
 		// Create Glue catalog table
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
-			DatabaseName: pulumi.String("awsGlueCatalogDatabase"),
+			DatabaseName: catalogDatabase.Name,
 			Name:         pulumi.String("tfmttable"),
 			Parameters: pulumi.StringMap{
 				"EXTERNAL":            pulumi.String("TRUE"),
@@ -66,11 +78,12 @@ func main() {
 						Type:    pulumi.String("struct<my_nested_string:string>"),
 					},
 				},
-				InputFormat:  pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"),
-				Location:     pulumi.String("s3://my-bucket/event-streams/my-stream"),
+				// Input format should be raw
+				InputFormat:  pulumi.String("org.apache.hadoop.mapred.TextInputFormat"),
+				Location:     pulumi.Sprintf("s3://%s/event-streams/%s", s3BucketName, kinesisStreamName),
 				OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
 				SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
-					Name: pulumi.String("my-stream"),
+					Name: dataStream.Name,
 					Parameters: pulumi.StringMap{
 						"serialization.format": pulumi.String("1"),
 					},
@@ -78,16 +91,7 @@ func main() {
 				},
 			},
 			TableType: pulumi.String("EXTERNAL_TABLE"),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create a Kinesis Data Stream
-		dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
-			Name:       pulumi.String("tfm-stream"),
-			ShardCount: pulumi.Int(1),
-		})
+		}, pulumi.DependsOn([]pulumi.Resource{catalogDatabase}))
 		if err != nil {
 			return err
 		}
