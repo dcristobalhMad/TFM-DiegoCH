@@ -15,7 +15,13 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// Create an S3 bucket to store the Kinesis data
-		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", nil)
+		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", &s3.BucketArgs{
+			Acl: pulumi.String("private"),
+			Tags: pulumi.StringMap{
+				"Environment": pulumi.String("Prod"),
+				"Name":        pulumi.String("mydatalake"),
+			},
+		})
 		if err != nil {
 			return err
 		}
@@ -88,6 +94,7 @@ func main() {
 
 		// Create a Lambda IAM role
 		lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
+			Name: pulumi.String("tfm-lambda-role"),
 			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
@@ -109,6 +116,7 @@ func main() {
 		// Create a Lambda function for data transformation
 		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
 			Runtime: lambda.RuntimeGo1dx,
+			Name:    pulumi.String("dataTransformLambda"),
 			Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
 			Handler: pulumi.String("main"),
 			Role:    lambdaRole.Arn,
@@ -119,6 +127,7 @@ func main() {
 
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
+			Name: pulumi.String("firehoseDeliveryStreamRole"),
 			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
@@ -140,6 +149,7 @@ func main() {
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
+			Name:        pulumi.String("tfm-firehose-stream"),
 			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
 				RoleArn:   firehoseRole.Arn,
 				BucketArn: s3Bucket.Arn,
