@@ -151,6 +151,35 @@ func main() {
 			return err
 		}
 
+		// Attach Glue CatalogRead policy to the IAM role
+		readPolicy, err := iam.NewPolicy(ctx, "myReadPolicy", &iam.PolicyArgs{
+			Policy: pulumi.Sprintf(`{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "glue:GetDatabase",
+                    "glue:GetTable"
+                  ],
+                  "Resource": [
+                    "arn:aws:glue:*:*:*"
+                  ],
+                  "Effect": "Allow"
+                }
+              ]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+		_, err = iam.NewRolePolicyAttachment(ctx, "myReadPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: readPolicy.Arn,
+			Role:      firehoseRole.Name,
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
@@ -160,7 +189,7 @@ func main() {
 				BucketArn:         s3Bucket.Arn,
 				BufferSize:        pulumi.Int(128),
 				BufferInterval:    pulumi.Int(60),
-				CompressionFormat: pulumi.String("Snappy"),
+				CompressionFormat: pulumi.String("UNCOMPRESSED"),
 				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
@@ -182,6 +211,7 @@ func main() {
 					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
 						CatalogId:    pulumi.String(""), // empty string means current account
 						DatabaseName: catalogDatabase.Name,
+						RoleArn:      firehoseRole.Arn,
 						TableName:    catalogTable.Name,
 						Region:       pulumi.String("us-east-1"),
 						VersionId:    pulumi.String("LATEST"),
