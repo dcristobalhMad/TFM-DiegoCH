@@ -1,2 +1,5 @@
 Infrastructure/lambda/bin/lambda_function.zip
 Infrastructure/lambda/bin/main
+.ipynb_checkpoints
+haproxy.log-*
+hap_pro_logs/
