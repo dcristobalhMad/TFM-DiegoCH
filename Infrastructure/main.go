@@ -156,8 +156,37 @@ func main() {
 			Destination: pulumi.String("extended_s3"),
 			Name:        pulumi.String("tfm-firehose-stream"),
 			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
-				RoleArn:   firehoseRole.Arn,
-				BucketArn: s3Bucket.Arn,
+				RoleArn:           firehoseRole.Arn,
+				BucketArn:         s3Bucket.Arn,
+				BufferSize:        pulumi.Int(128),
+				BufferInterval:    pulumi.Int(60),
+				CompressionFormat: pulumi.String("Snappy"),
+				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
+					Enabled: pulumi.Bool(true),
+					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
+						Deserializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerArgs{
+							HiveJsonSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerHiveJsonSerDeArgs{
+								TimestampFormats: pulumi.StringArray{
+									pulumi.String("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"),
+								},
+							},
+						},
+					},
+					OutputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationArgs{
+						Serializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerArgs{
+							ParquetSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerParquetSerDeArgs{
+								Compression: pulumi.String("SNAPPY"),
+							},
+						},
+					},
+					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
+						CatalogId:    pulumi.String(""), // empty string means current account
+						DatabaseName: catalogDatabase.Name,
+						TableName:    catalogTable.Name,
+						Region:       pulumi.String("us-east-1"),
+						VersionId:    pulumi.String("LATEST"),
+					},
+				},
 				ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					Processors: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArray{
