@@ -151,6 +151,26 @@ func main() {
 			return err
 		}
 
+		glueRole, err := iam.NewRole(ctx, "glueRole", &iam.RoleArgs{
+			Name: pulumi.String("glueRole"),
+			AssumeRolePolicy: pulumi.String(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": "sts:AssumeRole",
+                        "Principal": {
+                            "Service": "glue.amazonaws.com"
+                        },
+                        "Effect": "Allow",
+                        "Sid": ""
+                    }
+                ]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
@@ -160,7 +180,7 @@ func main() {
 				BucketArn:         s3Bucket.Arn,
 				BufferSize:        pulumi.Int(128),
 				BufferInterval:    pulumi.Int(60),
-				CompressionFormat: pulumi.String("Snappy"),
+				CompressionFormat: pulumi.String("UNCOMPRESSED"),
 				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
@@ -182,6 +202,7 @@ func main() {
 					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
 						CatalogId:    pulumi.String(""), // empty string means current account
 						DatabaseName: catalogDatabase.Name,
+						RoleArn:      glueRole.Arn,
 						TableName:    catalogTable.Name,
 						Region:       pulumi.String("us-east-1"),
 						VersionId:    pulumi.String("LATEST"),
@@ -216,6 +237,7 @@ func main() {
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
 		ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
+		ctx.Export("glueRoleName", glueRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableName", catalogTable.Name)
 
