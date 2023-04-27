@@ -151,21 +151,30 @@ func main() {
 			return err
 		}
 
-		glueRole, err := iam.NewRole(ctx, "glueRole", &iam.RoleArgs{
-			Name: pulumi.String("glueRole"),
-			AssumeRolePolicy: pulumi.String(`{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Action": "sts:AssumeRole",
-                        "Principal": {
-                            "Service": "glue.amazonaws.com"
-                        },
-                        "Effect": "Allow",
-                        "Sid": ""
-                    }
-                ]
+		// Attach Glue CatalogRead policy to the IAM role
+		readPolicy, err := iam.NewPolicy(ctx, "myReadPolicy", &iam.PolicyArgs{
+			Policy: pulumi.Sprintf(`{
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "glue:GetDatabase",
+                    "glue:GetTable"
+                  ],
+                  "Resource": [
+                    "arn:aws:glue:*:*:*"
+                  ],
+                  "Effect": "Allow"
+                }
+              ]
             }`),
+		})
+		if err != nil {
+			return err
+		}
+		_, err = iam.NewRolePolicyAttachment(ctx, "myReadPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: readPolicy.Arn,
+			Role:      firehoseRole.Name,
 		})
 		if err != nil {
 			return err
@@ -202,7 +211,7 @@ func main() {
 					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
 						CatalogId:    pulumi.String(""), // empty string means current account
 						DatabaseName: catalogDatabase.Name,
-						RoleArn:      glueRole.Arn,
+						RoleArn:      firehoseRole.Arn,
 						TableName:    catalogTable.Name,
 						Region:       pulumi.String("us-east-1"),
 						VersionId:    pulumi.String("LATEST"),
@@ -237,7 +246,6 @@ func main() {
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
 		ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
-		ctx.Export("glueRoleName", glueRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableName", catalogTable.Name)
 
