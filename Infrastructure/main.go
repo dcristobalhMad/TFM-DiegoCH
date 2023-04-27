@@ -18,8 +18,8 @@ func main() {
 		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", &s3.BucketArgs{
 			Acl: pulumi.String("private"),
 			Tags: pulumi.StringMap{
-				"Environment": pulumi.String("Prod"),
-				"Name":        pulumi.String("mydatalake"),
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
 			},
 		})
 		if err != nil {
@@ -29,6 +29,10 @@ func main() {
 		dataStream, err := kinesis.NewStream(ctx, "kinesisDataStream", &kinesis.StreamArgs{
 			Name:       pulumi.String("tfm-stream"),
 			ShardCount: pulumi.Int(1),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
@@ -99,6 +103,10 @@ func main() {
 		// Create a Lambda IAM role
 		lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
 			Name: pulumi.String("tfm-lambda-role"),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
@@ -125,6 +133,10 @@ func main() {
 			Handler: pulumi.String("main"),
 			Timeout: pulumi.Int(60),
 			Role:    lambdaRole.Arn,
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
@@ -133,6 +145,10 @@ func main() {
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
 			Name: pulumi.String("firehoseDeliveryStreamRole"),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 			AssumeRolePolicy: pulumi.String(`{
                 "Version": "2012-10-17",
                 "Statement": [
@@ -153,6 +169,10 @@ func main() {
 
 		// Attach Glue CatalogRead policy to the IAM role
 		readPolicy, err := iam.NewPolicy(ctx, "myReadPolicy", &iam.PolicyArgs{
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 			Policy: pulumi.Sprintf(`{
               "Version": "2012-10-17",
               "Statement": [
@@ -184,6 +204,10 @@ func main() {
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
 			Name:        pulumi.String("tfm-firehose-stream"),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
 				RoleArn:           firehoseRole.Arn,
 				BucketArn:         s3Bucket.Arn,
