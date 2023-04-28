@@ -1,6 +1,7 @@
 Infrastructure/lambda/bin/lambda_function.zip
 Infrastructure/lambda/bin/main
 .ipynb_checkpoints
-haproxy.log-*
-analyze_data/hap_pro_logs/*
+haproxy.log*
+analyze_data/*
+!analyze_data/hap_dev_logs/.gitkeep
 !analyze_data/hap_pro_logs/.gitkeep

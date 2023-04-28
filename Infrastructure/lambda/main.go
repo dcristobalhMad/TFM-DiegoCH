@@ -20,11 +20,11 @@ func handleRequest(event events.KinesisFirehoseEvent) (events.KinesisFirehoseRes
 		fmt.Printf("RecordID: %s\n", record.RecordID)
 		fmt.Printf("ApproximateArrivalTimestamp: %s\n", record.ApproximateArrivalTimestamp)
 
-		// Transform data: ToUpper the data
+		// Transform data: ToLower the data
 		var transformedRecord events.KinesisFirehoseResponseRecord
 		transformedRecord.RecordID = record.RecordID
 		transformedRecord.Result = events.KinesisFirehoseTransformedStateOk
-		transformedRecord.Data = []byte(strings.ToUpper(string(record.Data)))
+		transformedRecord.Data = []byte(strings.ToLower(string(record.Data)))
 
 		response.Records = append(response.Records, transformedRecord)
 	}
