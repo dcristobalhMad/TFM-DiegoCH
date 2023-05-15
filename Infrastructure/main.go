@@ -271,7 +271,7 @@ func main() {
 		ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
-		ctx.Export("glueTableName", catalogTable.Name)
+		ctx.Export("glueTableNameX", catalogTable.Name)
 
 		return nil
 	})
