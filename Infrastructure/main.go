@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/s3"
@@ -36,66 +35,66 @@ func main() {
 		}
 
 		// Create a Glue catalog database
-		catalogDatabase, err := glue.NewCatalogDatabase(ctx, "awsGlueCatalogDatabase", &glue.CatalogDatabaseArgs{
-			Name: pulumi.String("tfmcatalogdatabase"),
-		})
-		if err != nil {
-			return err
-		}
+		// catalogDatabase, err := glue.NewCatalogDatabase(ctx, "awsGlueCatalogDatabase", &glue.CatalogDatabaseArgs{
+		// 	Name: pulumi.String("tfmcatalogdatabase"),
+		// })
+		// if err != nil {
+		// 	return err
+		// }
 		// Create variables
-		s3BucketName := s3Bucket.ID()
-		kinesisStreamName := dataStream.Name
+		// s3BucketName := s3Bucket.ID()
+		// kinesisStreamName := dataStream.Name
 		// Create Glue catalog table
-		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
-			DatabaseName: catalogDatabase.Name,
-			Name:         pulumi.String("tfmttable"),
-			Parameters: pulumi.StringMap{
-				"EXTERNAL":            pulumi.String("TRUE"),
-				"parquet.compression": pulumi.String("SNAPPY"),
-			},
-			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
-				Columns: glue.CatalogTableStorageDescriptorColumnArray{
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Name: pulumi.String("my_string"),
-						Type: pulumi.String("string"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Name: pulumi.String("my_double"),
-						Type: pulumi.String("double"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String(""),
-						Name:    pulumi.String("my_date"),
-						Type:    pulumi.String("date"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String(""),
-						Name:    pulumi.String("my_bigint"),
-						Type:    pulumi.String("bigint"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String(""),
-						Name:    pulumi.String("my_struct"),
-						Type:    pulumi.String("struct<my_nested_string:string>"),
-					},
-				},
-				// Input format should be raw
-				InputFormat:  pulumi.String("org.apache.hadoop.mapred.TextInputFormat"),
-				Location:     pulumi.Sprintf("s3://%s/event-streams/%s", s3BucketName, kinesisStreamName),
-				OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
-				SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
-					Name: dataStream.Name,
-					Parameters: pulumi.StringMap{
-						"serialization.format": pulumi.String("1"),
-					},
-					SerializationLibrary: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"),
-				},
-			},
-			TableType: pulumi.String("EXTERNAL_TABLE"),
-		}, pulumi.DependsOn([]pulumi.Resource{catalogDatabase}))
-		if err != nil {
-			return err
-		}
+		// catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
+		// 	DatabaseName: catalogDatabase.Name,
+		// 	Name:         pulumi.String("tfmttable"),
+		// 	Parameters: pulumi.StringMap{
+		// 		"EXTERNAL":            pulumi.String("TRUE"),
+		// 		"parquet.compression": pulumi.String("SNAPPY"),
+		// 	},
+		// 	StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
+		// 		Columns: glue.CatalogTableStorageDescriptorColumnArray{
+		// 			&glue.CatalogTableStorageDescriptorColumnArgs{
+		// 				Name: pulumi.String("my_string"),
+		// 				Type: pulumi.String("string"),
+		// 			},
+		// 			&glue.CatalogTableStorageDescriptorColumnArgs{
+		// 				Name: pulumi.String("my_double"),
+		// 				Type: pulumi.String("double"),
+		// 			},
+		// 			&glue.CatalogTableStorageDescriptorColumnArgs{
+		// 				Comment: pulumi.String(""),
+		// 				Name:    pulumi.String("my_date"),
+		// 				Type:    pulumi.String("date"),
+		// 			},
+		// 			&glue.CatalogTableStorageDescriptorColumnArgs{
+		// 				Comment: pulumi.String(""),
+		// 				Name:    pulumi.String("my_bigint"),
+		// 				Type:    pulumi.String("bigint"),
+		// 			},
+		// 			&glue.CatalogTableStorageDescriptorColumnArgs{
+		// 				Comment: pulumi.String(""),
+		// 				Name:    pulumi.String("my_struct"),
+		// 				Type:    pulumi.String("struct<my_nested_string:string>"),
+		// 			},
+		// 		},
+		// 		// Input format should be raw
+		// 		InputFormat:  pulumi.String("org.apache.hadoop.mapred.TextInputFormat"),
+		// 		Location:     pulumi.Sprintf("s3://%s/event-streams/%s", s3BucketName, kinesisStreamName),
+		// 		OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
+		// 		SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
+		// 			Name: dataStream.Name,
+		// 			Parameters: pulumi.StringMap{
+		// 				"serialization.format": pulumi.String("1"),
+		// 			},
+		// 			SerializationLibrary: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"),
+		// 		},
+		// 	},
+		// 	TableType: pulumi.String("EXTERNAL_TABLE"),
+		// }, pulumi.DependsOn([]pulumi.Resource{catalogDatabase}))
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Create a Lambda IAM role
 		// lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
@@ -224,33 +223,33 @@ func main() {
 				BufferSize:        pulumi.Int(128),
 				BufferInterval:    pulumi.Int(60),
 				CompressionFormat: pulumi.String("UNCOMPRESSED"),
-				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
-					Enabled: pulumi.Bool(true),
-					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
-						Deserializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerArgs{
-							HiveJsonSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerHiveJsonSerDeArgs{
-								TimestampFormats: pulumi.StringArray{
-									pulumi.String("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"),
-								},
-							},
-						},
-					},
-					OutputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationArgs{
-						Serializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerArgs{
-							ParquetSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerParquetSerDeArgs{
-								Compression: pulumi.String("SNAPPY"),
-							},
-						},
-					},
-					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
-						CatalogId:    pulumi.String(""), // empty string means current account
-						DatabaseName: catalogDatabase.Name,
-						RoleArn:      firehoseRole.Arn,
-						TableName:    catalogTable.Name,
-						Region:       pulumi.String("us-east-1"),
-						VersionId:    pulumi.String("LATEST"),
-					},
-				},
+				// DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
+				// 	Enabled: pulumi.Bool(true),
+				// 	InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
+				// 		Deserializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerArgs{
+				// 			HiveJsonSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationDeserializerHiveJsonSerDeArgs{
+				// 				TimestampFormats: pulumi.StringArray{
+				// 					pulumi.String("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"),
+				// 				},
+				// 			},
+				// 		},
+				// 	},
+				// OutputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationArgs{
+				// 	Serializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerArgs{
+				// 		ParquetSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerParquetSerDeArgs{
+				// 			Compression: pulumi.String("SNAPPY"),
+				// 		},
+				// 	},
+				// },
+				// SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
+				// 	CatalogId:    pulumi.String(""), // empty string means current account
+				// 	DatabaseName: catalogDatabase.Name,
+				// 	RoleArn:      firehoseRole.Arn,
+				// 	TableName:    catalogTable.Name,
+				// 	Region:       pulumi.String("us-east-1"),
+				// 	VersionId:    pulumi.String("LATEST"),
+				// },
+				//	},
 				// // ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
 				// // 	Enabled: pulumi.Bool(true),
 				// // 	Processors: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArray{
@@ -280,8 +279,8 @@ func main() {
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
 		//ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
-		ctx.Export("glueDatabaseName", catalogDatabase.Name)
-		ctx.Export("glueTableNameX", catalogTable.Name)
+		// ctx.Export("glueDatabaseName", catalogDatabase.Name)
+		// ctx.Export("glueTableNameX", catalogTable.Name)
 
 		return nil
 	})
