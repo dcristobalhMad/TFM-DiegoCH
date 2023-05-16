@@ -197,6 +197,15 @@ func main() {
 			return err
 		}
 
+		// Attach the policy to read the Kinesis Stream.
+		_, err = iam.NewRolePolicyAttachment(ctx, "kinesisStreamRolePolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonKinesisReadOnlyAccess"),
+			Role:      firehoseRole.Name,
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
