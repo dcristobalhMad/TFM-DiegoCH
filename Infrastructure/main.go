@@ -205,6 +205,10 @@ func main() {
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
 			},
+			KinesisSourceConfiguration: &kinesis.FirehoseDeliveryStreamKinesisSourceConfigurationArgs{
+				KinesisStreamArn: dataStream.Arn,
+				RoleArn:          firehoseRole.Arn, // Replace with your IAM role ARN
+			},
 			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
 				RoleArn:           firehoseRole.Arn,
 				BucketArn:         s3Bucket.Arn,
