@@ -1,37 +1,37 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handleRequest(event events.KinesisFirehoseEvent) (events.KinesisFirehoseResponse, error) {
+type Record struct {
+	Name string `json:"name"`
+}
 
-	fmt.Printf("InvocationID: %s\n", event.InvocationID)
-	fmt.Printf("DeliveryStreamArn: %s\n", event.DeliveryStreamArn)
-	fmt.Printf("Region: %s\n", event.Region)
+func Handler(request json.RawMessage) (json.RawMessage, error) {
+	// Unmarshal the input data to a slice of Record structs
+	var records []Record
+	if err := json.Unmarshal(request, &records); err != nil {
+		return nil, err
+	}
 
-	var response events.KinesisFirehoseResponse
+	// Transform the name field of each record to lowercase
+	for i := range records {
+		records[i].Name = strings.ToLower(records[i].Name)
+	}
 
-	for _, record := range event.Records {
-		fmt.Printf("RecordID: %s\n", record.RecordID)
-		fmt.Printf("ApproximateArrivalTimestamp: %s\n", record.ApproximateArrivalTimestamp)
-
-		// Transform data: ToLower the data
-		var transformedRecord events.KinesisFirehoseResponseRecord
-		transformedRecord.RecordID = record.RecordID
-		transformedRecord.Result = events.KinesisFirehoseTransformedStateOk
-		transformedRecord.Data = []byte(strings.ToLower(string(record.Data)))
-
-		response.Records = append(response.Records, transformedRecord)
+	// Marshal the transformed data back to JSON
+	response, err := json.Marshal(records)
+	if err != nil {
+		return nil, err
 	}
 
 	return response, nil
 }
 
 func main() {
-	lambda.Start(handleRequest)
+	lambda.Start(Handler)
 }
