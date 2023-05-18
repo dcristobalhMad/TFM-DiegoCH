@@ -261,7 +261,8 @@ func main() {
 					OutputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationArgs{
 						Serializer: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerArgs{
 							ParquetSerDe: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationOutputFormatConfigurationSerializerParquetSerDeArgs{
-								Compression: pulumi.String("SNAPPY"),
+								Compression:                 pulumi.String("SNAPPY"),
+								EnableDictionaryCompression: pulumi.Bool(false),
 							},
 						},
 					},
