@@ -1,7 +1,7 @@
-Infrastructure/lambda/bin/lambda_function.zip
-Infrastructure/lambda/bin/main
+Infrastructure/lambda/*.zip
 .ipynb_checkpoints
 haproxy.log*
 analyze_data/*
 !analyze_data/hap_dev_logs/.gitkeep
 !analyze_data/hap_pro_logs/.gitkeep
+.vscode
