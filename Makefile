@@ -5,8 +5,7 @@ SHELL := /bin/bash
 
 # Build Lambda function
 build-lambda:
-	cd Infrastructure/lambda && GOOS=linux go build -o bin/main main.go
-	zip -j Infrastructure/lambda/bin/lambda_function.zip Infrastructure/lambda/bin/main
+	zip -j Infrastructure/lambda/lambda_function.zip Infrastructure/lambda/handler.py
 
 # Pulumi commands
 check: build-lambda
