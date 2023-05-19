@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
@@ -63,8 +64,84 @@ func main() {
 				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=$${date}", s3Bucket.ID()),
 			},
 			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
-				Location:     pulumi.Sprintf("s3://%s/events/", s3Bucket.ID()),
-				InputFormat:  pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"),
+				Columns: glue.CatalogTableStorageDescriptorColumnArray{
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("timestamp"),
+						Type: pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("process_id"),
+						Type: pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Ip address of the client"),
+						Name:    pulumi.String("source_address"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Ip address of the server"),
+						Name:    pulumi.String("destination_address"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Timestamp of the request"),
+						Name:    pulumi.String("request_timestamp"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Nombre del frontend"),
+						Name:    pulumi.String("frontend_name"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Nombre del backend"),
+						Name:    pulumi.String("backend_name"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Nombre del servidor"),
+						Name:    pulumi.String("server_name"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Timings de la request"),
+						Name:    pulumi.String("timings"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Código de estado de la request"),
+						Name:    pulumi.String("status_code"),
+						Type:    pulumi.String("int"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Cantidad de bytes transferidos"),
+						Name:    pulumi.String("bytes_read"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Cantidad de conexiones"),
+						Name:    pulumi.String("connection_times"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Tiempo de la sesion"),
+						Name:    pulumi.String("session_times"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("User agent de la request"),
+						Name:    pulumi.String("user_agent"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Tipo de request"),
+						Name:    pulumi.String("request"),
+						Type:    pulumi.String("string"),
+					},
+				},
+				Location: pulumi.Sprintf("s3://%s/events/", s3Bucket.ID()),
+				// input format should be json
+				InputFormat:  pulumi.String("org.apache.hadoop.mapred.TextInputFormat"),
 				OutputFormat: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
 				Compressed:   pulumi.Bool(false),
 				SerDeInfo: &glue.CatalogTableStorageDescriptorSerDeInfoArgs{
@@ -108,16 +185,54 @@ func main() {
 
 		// Create a Lambda function for data transformation
 		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
-			Runtime: lambda.RuntimeGo1dx,
+			Runtime: pulumi.String("python3.9"),
 			Name:    pulumi.String("dataTransformLambda"),
-			Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
-			Handler: pulumi.String("main"),
+			Code:    pulumi.NewFileArchive("./lambda/lambda_function.zip"),
+			Handler: pulumi.String("lambda_function.lambda_handler"),
 			Timeout: pulumi.Int(60),
 			Role:    lambdaRole.Arn,
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
 			},
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach the AWSLambdaBasicExecutionRole policy to the Lambda role
+		_, err = iam.NewRolePolicyAttachment(ctx, "basicExecutionRole", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"),
+			Role:      lambdaRole.Name,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create a Cloudwatch Log Group for the Lambda Function
+		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
+			RetentionInDays: pulumi.Int(1),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach the Inline Policy for specific LogGroup access
+		_, err = iam.NewRolePolicy(ctx, "allowLambdaLoggingToSpecificLogGroup", &iam.RolePolicyArgs{
+			Role: lambdaRole.Name,
+			Policy: pulumi.Sprintf(`{
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": "%s"
+                        }
+                    ]
+                }`, logGroup.Arn),
 		})
 		if err != nil {
 			return err
@@ -306,6 +421,7 @@ func main() {
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
+		ctx.Export("logGroupName", logGroup.Name)
 
 		return nil
 	})
