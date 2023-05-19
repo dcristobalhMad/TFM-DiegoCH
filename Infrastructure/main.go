@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
-	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/lambda"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -107,13 +104,18 @@ func main() {
 		}
 
 		// Create a Lambda function for data transformation
-		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
+		/* dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
 			Runtime: lambda.RuntimeGo1dx,
 			Name:    pulumi.String("dataTransformLambda"),
 			Code:    pulumi.NewFileArchive("./lambda/bin/lambda_function.zip"),
 			Handler: pulumi.String("main"),
 			Timeout: pulumi.Int(60),
 			Role:    lambdaRole.Arn,
+			Environment: lambda.FunctionEnvironmentArgs{
+				Variables: pulumi.StringMap{
+					"LOG_LEVEL": pulumi.String("INFO"),
+				},
+			},
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
@@ -121,7 +123,7 @@ func main() {
 		})
 		if err != nil {
 			return err
-		}
+		} */
 
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
@@ -275,7 +277,7 @@ func main() {
 						VersionId:    pulumi.String("LATEST"),
 					},
 				},
-				ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
+				/* ProcessingConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					Processors: kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArray{
 						&kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationProcessingConfigurationProcessorArgs{
@@ -290,7 +292,7 @@ func main() {
 							},
 						},
 					},
-				},
+				}, */
 			},
 		})
 		if err != nil {
@@ -300,7 +302,7 @@ func main() {
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
-		ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
+		//ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
 		ctx.Export("lambdaRoleName", lambdaRole.Name)
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
