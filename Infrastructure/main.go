@@ -71,6 +71,26 @@ func main() {
 					},
 					SerializationLibrary: pulumi.String("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"),
 				},
+				Columns: glue.CatalogTableStorageDescriptorColumnArray{
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("my_string"),
+						Type: pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Name: pulumi.String("my_double"),
+						Type: pulumi.String("double"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String(""),
+						Name:    pulumi.String("my_date"),
+						Type:    pulumi.String("date"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String(""),
+						Name:    pulumi.String("my_bigint"),
+						Type:    pulumi.String("bigint"),
+					},
+				},
 			},
 		},
 			pulumi.DependsOn([]pulumi.Resource{catalogDatabase}))
