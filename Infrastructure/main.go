@@ -211,6 +211,7 @@ func main() {
 
 		// Create a Cloudwatch Log Group for the Lambda Function
 		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
+			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
 			RetentionInDays: pulumi.Int(1),
 		})
 		if err != nil {
