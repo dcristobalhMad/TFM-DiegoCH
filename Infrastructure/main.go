@@ -200,6 +200,14 @@ func main() {
 			return err
 		}
 
+		// Attach the AWSLambdaExecute policy to the Lambda role
+		_, err = iam.NewRolePolicyAttachment(ctx, "lambdaPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			Role:      lambdaRole.Name,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaExecute"),
+		})
+		if err != nil {
+			return err
+		}
 		// Attach the AWSLambdaBasicExecutionRole policy to the Lambda role
 		_, err = iam.NewRolePolicyAttachment(ctx, "basicExecutionRole", &iam.RolePolicyAttachmentArgs{
 			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"),
