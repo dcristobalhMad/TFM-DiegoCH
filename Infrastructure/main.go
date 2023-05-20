@@ -343,6 +343,15 @@ func main() {
 			return err
 		}
 
+		// Create a Cloudwatch Log Group for the kinesis firehose
+		firehoseLogGroup, err := cloudwatch.NewLogGroup(ctx, "firehoseLogGroup", &cloudwatch.LogGroupArgs{
+			Name:            pulumi.String("/aws/kinesisfirehose/tfm-firehose-stream"),
+			RetentionInDays: pulumi.Int(1),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
@@ -363,6 +372,11 @@ func main() {
 				CompressionFormat: pulumi.String("UNCOMPRESSED"),
 				Prefix:            pulumi.String("events/date=!{timestamp:yyyy}-!{timestamp:MM}-!{timestamp:dd}/"),
 				ErrorOutputPrefix: pulumi.String("events_error/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}/"),
+				CloudwatchLoggingOptions: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationCloudwatchLoggingOptionsArgs{
+					Enabled:       pulumi.Bool(true),
+					LogGroupName:  firehoseLogGroup.Name,
+					LogStreamName: pulumi.String("kinesis-stream"),
+				},
 				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
