@@ -5,6 +5,8 @@ on:
       - master
     paths:
       - Infrastructure/**
+    tags:
+      - "*.*.*-deploy*"
 jobs:
   update:
     name: Desploy/update-infra
