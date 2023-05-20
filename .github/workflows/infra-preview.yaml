@@ -55,7 +55,7 @@ jobs:
       - run: go mod download
         working-directory: ./Infrastructure
       - run: make build-lambda
-      - uses: pulumi/actions@v3
+      - uses: pulumi/actions@v4
         with:
           color: always
           work-dir: ./Infrastructure
