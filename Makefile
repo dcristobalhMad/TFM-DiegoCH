@@ -5,7 +5,7 @@ SHELL := /bin/bash
 
 # Build Lambda function
 build-lambda:
-	zip -j Infrastructure/lambda/lambda_function.zip Infrastructure/lambda/handler.py
+	zip -j Infrastructure/lambda/lambda_function.zip Infrastructure/lambda/lambda_function.py
 
 # Pulumi commands
 check: build-lambda
