@@ -157,8 +157,90 @@ func main() {
 		if err != nil {
 			return err
 		}
+
+		// Create a Lambda IAM role
+		lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
+			Name: pulumi.String("tfm-lambda-role"),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
+			AssumeRolePolicy: pulumi.String(`{
+		        "Version": "2012-10-17",
+		        "Statement": [
+		            {
+		                "Action": "sts:AssumeRole",
+		                "Principal": {
+		                    "Service": "lambda.amazonaws.com"
+		                },
+		                "Effect": "Allow",
+		                "Sid": ""
+		            }
+		        ]
+		    }`),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create a Lambda function for data transformation
+		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
+			Runtime: pulumi.String("python3.9"),
+			Name:    pulumi.String("dataTransformLambda"),
+			Code:    pulumi.NewFileArchive("./lambda/lambda_function.zip"),
+			Handler: pulumi.String("lambda_function.lambda_handler"),
+			Timeout: pulumi.Int(60),
+			Role:    lambdaRole.Arn,
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach the AWSLambdaBasicExecutionRole policy to the Lambda role
+		_, err = iam.NewRolePolicyAttachment(ctx, "basicExecutionRole", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"),
+			Role:      lambdaRole.Name,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create a Cloudwatch Log Group for the Lambda Function
+		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
+			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
+			RetentionInDays: pulumi.Int(1),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach the Inline Policy for specific LogGroup access
+		_, err = iam.NewRolePolicy(ctx, "allowLambdaLoggingToSpecificLogGroup", &iam.RolePolicyArgs{
+			Role: lambdaRole.Name,
+			Policy: pulumi.Sprintf(`{
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": "%s"
+                        }
+                    ]
+                }`, logGroup.Arn),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Kinesis Firehose IAM role
-		tfmDiegoRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
+		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
 			Name: pulumi.String("firehoseDeliveryStreamRole"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
@@ -177,95 +259,6 @@ func main() {
                     }
                 ]
             }`),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach Glue CatalogRead policy to the IAM role
-		lambdaPolicy, err := iam.NewPolicy(ctx, "lambdaPolicy", &iam.PolicyArgs{
-			Tags: pulumi.StringMap{
-				"Env":  pulumi.String("test"),
-				"Name": pulumi.String("tfm-diego"),
-			},
-			Policy: pulumi.Sprintf(`{
-				"Version": "2012-10-17",
-		        "Statement": [
-		            {
-		                "Action": "sts:AssumeRole",
-		                "Principal": {
-		                    "Service": "lambda.amazonaws.com"
-		                },
-		                "Effect": "Allow",
-		                "Sid": ""
-		            }
-		        ]
-            }`),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach lambda policy to the IAM role
-		_, err = iam.NewRolePolicyAttachment(ctx, "lambdaPolicyAttachment", &iam.RolePolicyAttachmentArgs{
-			PolicyArn: lambdaPolicy.Arn,
-			Role:      tfmDiegoRole.Name,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create a Lambda function for data transformation
-		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
-			Runtime: pulumi.String("python3.9"),
-			Name:    pulumi.String("dataTransformLambda"),
-			Code:    pulumi.NewFileArchive("./lambda/lambda_function.zip"),
-			Handler: pulumi.String("lambda_function.lambda_handler"),
-			Timeout: pulumi.Int(60),
-			Role:    tfmDiegoRole.Arn,
-			Tags: pulumi.StringMap{
-				"Env":  pulumi.String("test"),
-				"Name": pulumi.String("tfm-diego"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach the AWSLambdaBasicExecutionRole policy to the Lambda role
-		_, err = iam.NewRolePolicyAttachment(ctx, "basicExecutionRole", &iam.RolePolicyAttachmentArgs{
-			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"),
-			Role:      tfmDiegoRole.Name,
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create a Cloudwatch Log Group for the Lambda Function
-		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
-			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
-			RetentionInDays: pulumi.Int(1),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach the Inline Policy for specific LogGroup access
-		_, err = iam.NewRolePolicy(ctx, "allowLambdaLoggingToSpecificLogGroup", &iam.RolePolicyArgs{
-			Role: tfmDiegoRole.Name,
-			Policy: pulumi.Sprintf(`{
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Action": [
-                                "logs:CreateLogStream",
-                                "logs:PutLogEvents"
-                            ],
-                            "Resource": "%s"
-                        }
-                    ]
-                }`, logGroup.Arn),
 		})
 		if err != nil {
 			return err
@@ -298,7 +291,7 @@ func main() {
 		}
 		_, err = iam.NewRolePolicyAttachment(ctx, "myReadGluePolicyAttachment", &iam.RolePolicyAttachmentArgs{
 			PolicyArn: readGluePolicy.Arn,
-			Role:      tfmDiegoRole.Name,
+			Role:      firehoseRole.Name,
 		})
 		if err != nil {
 			return err
@@ -335,7 +328,7 @@ func main() {
 		// Attach the policy to put data to s3 bucket
 		_, err = iam.NewRolePolicyAttachment(ctx, "putDataS3PolicyAttachment", &iam.RolePolicyAttachmentArgs{
 			PolicyArn: putDataS3.Arn,
-			Role:      tfmDiegoRole.Name,
+			Role:      firehoseRole.Name,
 		})
 		if err != nil {
 			return err
@@ -344,7 +337,7 @@ func main() {
 		// Attach the policy to read the Kinesis Stream.
 		_, err = iam.NewRolePolicyAttachment(ctx, "kinesisStreamRolePolicyAttachment", &iam.RolePolicyAttachmentArgs{
 			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonKinesisReadOnlyAccess"),
-			Role:      tfmDiegoRole.Name,
+			Role:      firehoseRole.Name,
 		})
 		if err != nil {
 			return err
@@ -360,10 +353,10 @@ func main() {
 			},
 			KinesisSourceConfiguration: &kinesis.FirehoseDeliveryStreamKinesisSourceConfigurationArgs{
 				KinesisStreamArn: dataStream.Arn,
-				RoleArn:          tfmDiegoRole.Arn, // Replace with your IAM role ARN
+				RoleArn:          firehoseRole.Arn, // Replace with your IAM role ARN
 			},
 			ExtendedS3Configuration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationArgs{
-				RoleArn:           tfmDiegoRole.Arn,
+				RoleArn:           firehoseRole.Arn,
 				BucketArn:         s3Bucket.Arn,
 				BufferSize:        pulumi.Int(128),
 				BufferInterval:    pulumi.Int(60),
@@ -392,7 +385,7 @@ func main() {
 					SchemaConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationSchemaConfigurationArgs{
 						CatalogId:    pulumi.String(""), // empty string means current account
 						DatabaseName: catalogDatabase.Name,
-						RoleArn:      tfmDiegoRole.Arn,
+						RoleArn:      firehoseRole.Arn,
 						TableName:    catalogTable.Name,
 						Region:       pulumi.String("us-east-1"),
 						VersionId:    pulumi.String("LATEST"),
@@ -425,7 +418,8 @@ func main() {
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
 		ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
-		ctx.Export("tfmDiegoRoleName", tfmDiegoRole.Name)
+		ctx.Export("lambdaRoleName", lambdaRole.Name)
+		ctx.Export("firehoseRoleName", firehoseRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("logGroupName", logGroup.Name)
