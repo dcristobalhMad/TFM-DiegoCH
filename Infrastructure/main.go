@@ -46,6 +46,19 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Create a CloudWatch Log Group
+		glueLogGroup, err := cloudwatch.NewLogGroup(ctx, "glueLogGroup", nil)
+		if err != nil {
+			return err
+		}
+
+		// Create a CloudWatch Log Stream
+		glueLogStream, err := cloudwatch.NewLogStream(ctx, "glueLogStream", &cloudwatch.LogStreamArgs{
+			LogGroupName: glueLogGroup.Name,
+		})
+		if err != nil {
+			return err
+		}
 		// Create Glue catalog table
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: catalogDatabase.Name,
@@ -62,6 +75,8 @@ func main() {
 				"projection.date.interval":      pulumi.String("1"),
 				"projection.date.interval.unit": pulumi.String("DAYS"),
 				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=$${date}", s3Bucket.ID()),
+				"cloudwatch_log_group_arn":      glueLogGroup.Arn,
+				"cloudwatch_log_stream_name":    glueLogStream.Name,
 			},
 			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
 				Columns: glue.CatalogTableStorageDescriptorColumnArray{
@@ -272,6 +287,15 @@ func main() {
 			return err
 		}
 
+		// Attach the AWSLambdaExecute policy to the firehose role
+		_, err = iam.NewRolePolicyAttachment(ctx, "firehosePolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			Role:      firehoseRole.Name,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaExecute"),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Attach Glue CatalogRead policy to the IAM role
 		readGluePolicy, err := iam.NewPolicy(ctx, "myReadGluePolicy", &iam.PolicyArgs{
 			Tags: pulumi.StringMap{
@@ -359,6 +383,14 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Create a CloudWatch Log Stream
+		_, err = cloudwatch.NewLogStream(ctx, "firehoseLogStream", &cloudwatch.LogStreamArgs{
+			Name:         pulumi.String("tfm-firehose-stream"),
+			LogGroupName: firehoseLogGroup.Name,
+		})
+		if err != nil {
+			return err
+		}
 
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
@@ -383,7 +415,7 @@ func main() {
 				CloudwatchLoggingOptions: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationCloudwatchLoggingOptionsArgs{
 					Enabled:       pulumi.Bool(true),
 					LogGroupName:  firehoseLogGroup.Name,
-					LogStreamName: pulumi.String("kinesis-stream"),
+					LogStreamName: pulumi.String("tfm-firehose-stream"),
 				},
 				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
 					Enabled: pulumi.Bool(true),
