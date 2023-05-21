@@ -287,15 +287,39 @@ func main() {
 			return err
 		}
 
-		// Attach the AWSLambdaExecute policy to the firehose role
-		_, err = iam.NewRolePolicyAttachment(ctx, "firehosePolicyAttachment", &iam.RolePolicyAttachmentArgs{
-			Role:      firehoseRole.Name,
-			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaRole"),
+		// Attach Glue CatalogRead policy to the IAM role
+		lambdaExecFirehose, err := iam.NewPolicy(ctx, "lambdaExecFirehose", &iam.PolicyArgs{
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
+			Policy: pulumi.Sprintf(`{
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:InvokeFunction"
+							],
+							"Resource": [
+								"%s"
+							]
+						}
+					]
+				}
+            }`, dataTransformLambda.Arn),
 		})
 		if err != nil {
 			return err
 		}
-
+		_, err = iam.NewRolePolicyAttachment(ctx, "lambdaExecFirehoseAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: lambdaExecFirehose.Arn,
+			Role:      firehoseRole.Name,
+		})
+		if err != nil {
+			return err
+		}
+		/////////////////////////
 		// Attach Glue CatalogRead policy to the IAM role
 		readGluePolicy, err := iam.NewPolicy(ctx, "myReadGluePolicy", &iam.PolicyArgs{
 			Tags: pulumi.StringMap{
