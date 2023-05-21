@@ -16,7 +16,7 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// Create an S3 bucket to store the Kinesis data
-		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", &s3.BucketArgs{
+		s3Bucket, err := s3.NewBucket(ctx, "tfm-diego-datalake", &s3.BucketArgs{
 			Acl: pulumi.String("private"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
@@ -290,7 +290,7 @@ func main() {
 		// Attach the AWSLambdaExecute policy to the firehose role
 		_, err = iam.NewRolePolicyAttachment(ctx, "firehosePolicyAttachment", &iam.RolePolicyAttachmentArgs{
 			Role:      firehoseRole.Name,
-			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaExecute"),
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaRole"),
 		})
 		if err != nil {
 			return err
