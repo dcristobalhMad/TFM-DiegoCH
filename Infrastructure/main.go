@@ -306,7 +306,6 @@ func main() {
 							]
 						}
 					]
-				}
             }`, dataTransformLambda.Arn),
 		})
 		if err != nil {
