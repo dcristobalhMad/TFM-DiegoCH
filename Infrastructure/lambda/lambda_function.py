@@ -69,4 +69,4 @@ def lambda_handler(event, context):
             }
         )
 
-    return {"records": output_records}
+    return {"records": output_records} and print(output_records)

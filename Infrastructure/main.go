@@ -16,7 +16,7 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// Create an S3 bucket to store the Kinesis data
-		s3Bucket, err := s3.NewBucket(ctx, "mydatalake", &s3.BucketArgs{
+		s3Bucket, err := s3.NewBucket(ctx, "tfm-diego-datalake", &s3.BucketArgs{
 			Acl: pulumi.String("private"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
@@ -63,7 +63,7 @@ func main() {
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: catalogDatabase.Name,
 			Name:         pulumi.String("tfmttable"),
-			Description:  pulumi.String("An example Glue Catalog Table with output in Parquet format"),
+			Description:  pulumi.String("Glue catalog with data from Kinesis Firehose"),
 			TableType:    pulumi.String("EXTERNAL_TABLE"),
 			Parameters: pulumi.StringMap{
 				"EXTERNAL":                      pulumi.String("TRUE"),
@@ -264,7 +264,7 @@ func main() {
 
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
-			Name: pulumi.String("firehoseDeliveryStreamRole"),
+			Name: pulumi.String("tfm-diego-firehose-role"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
@@ -287,10 +287,10 @@ func main() {
 			return err
 		}
 
-		// Attach the AWSLambdaExecute policy to the firehose role
+		// Attach the AWSLambdaRole policy to the firehose role
 		_, err = iam.NewRolePolicyAttachment(ctx, "firehosePolicyAttachment", &iam.RolePolicyAttachmentArgs{
 			Role:      firehoseRole.Name,
-			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaExecute"),
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambdaRole"),
 		})
 		if err != nil {
 			return err
