@@ -279,6 +279,22 @@ func main() {
 		if err != nil {
 			return err
 		}
+		// Attach the AmazonKinesisFirehoseFullAccess policy to the Firehose role
+		_, err = iam.NewRolePolicyAttachment(ctx, "lambdaFullPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			Role:      firehoseRole.Name,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AWSLambda_FullAccess"),
+		})
+		if err != nil {
+			return err
+		}
+		// Attach the AmazonKinesisFirehoseFullAccess policy to the Firehose role
+		_, err = iam.NewRolePolicyAttachment(ctx, "s3FullPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			Role:      firehoseRole.Name,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonS3FullAccess"),
+		})
+		if err != nil {
+			return err
+		}
 		// Attach Glue CatalogRead policy to the IAM role
 		lambdaExecFirehose, err := iam.NewPolicy(ctx, "lambdaExecFirehose", &iam.PolicyArgs{
 			Tags: pulumi.StringMap{

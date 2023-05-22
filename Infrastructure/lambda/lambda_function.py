@@ -46,18 +46,22 @@ def parse_line(line):
 
 def lambda_handler(event, context):
     output_records = []
-    print("Input event:")
-    print(event)
     for record in event["records"]:
         payload = base64.b64decode(record["data"]).decode("utf-8")
-        print("Input payload:")
-        print(payload)
         # Parse each line of the payload
         parsed_data = []
+        # Load string as a json object
+        payload_json = json.loads(payload)
+        # Get the message from the json object
+        payload = payload_json["message"]
         for line in payload.splitlines():
             parsed_line = parse_line(line)
+            print("Parsed line:")
+            print(parsed_line)
             if parsed_line:
                 parsed_data.append(parsed_line)
+                print("Parsed data:")
+                print(parsed_data)
 
         # Convert parsed data to JSON and add to output records
         output_payload = json.dumps(parsed_data)
