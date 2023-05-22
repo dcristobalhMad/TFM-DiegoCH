@@ -62,17 +62,21 @@ def lambda_handler(event, context):
         payload_json = json.loads(payload)
         # Get the message from the json object
         payload = payload_json["message"]
-        for line in payload.splitlines():
-            parsed_log = parse_log(line)
-            print("Parsed line:")
-            print(parsed_log)
-            if parsed_log:
-                parsed_data.append(parsed_log)
-                print("Parsed data:")
-                print(parsed_data)
-
+        # for line in payload.splitlines():
+        #     parsed_log = parse_log(line)
+        #     print("Parsed line:")
+        #     print(parsed_log)
+        #     if parsed_log:
+        #         parsed_data.append(parsed_log)
+        #         print("Parsed data:")
+        #         print(parsed_data)
+        parsed_log = parse_log(payload)
+        print(parsed_log)
+        output_payload = json.dumps(parsed_log)
         # Convert parsed data to JSON and add to output records
-        output_payload = json.dumps(parsed_data)
+        # output_payload = json.dumps(parsed_data)
+        print("Output payload:")
+        print(output_payload)
         output_records.append(
             {
                 "recordId": record["recordId"],
@@ -82,8 +86,6 @@ def lambda_handler(event, context):
                 ),
             }
         )
-        print("Output payload:")
-        print(output_payload)
         print("Output records:")
         print(output_records)
     return {"records": output_records}
