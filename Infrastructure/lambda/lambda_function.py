@@ -49,7 +49,8 @@ def lambda_handler(event, context):
 
     for record in event["records"]:
         payload = base64.b64decode(record["data"]).decode("utf-8")
-
+        print("Input payload:")
+        print(payload)
         # Parse each line of the payload
         parsed_data = []
         for line in payload.splitlines():
@@ -68,5 +69,8 @@ def lambda_handler(event, context):
                 ),
             }
         )
-
+        print("Output payload:")
+        print(output_payload)
+        print("Output records:")
+        print(output_records)
     return {"records": output_records}
