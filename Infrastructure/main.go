@@ -17,7 +17,8 @@ func main() {
 
 		// Create an S3 bucket to store the Kinesis data
 		s3Bucket, err := s3.NewBucket(ctx, "tfm-diego-datalake", &s3.BucketArgs{
-			Acl: pulumi.String("private"),
+			ForceDestroy: pulumi.Bool(true),
+			Acl:          pulumi.String("private"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
