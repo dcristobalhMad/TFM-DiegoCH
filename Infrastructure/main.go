@@ -46,19 +46,6 @@ func main() {
 		if err != nil {
 			return err
 		}
-		// Create a CloudWatch Log Group
-		glueLogGroup, err := cloudwatch.NewLogGroup(ctx, "glueLogGroup", nil)
-		if err != nil {
-			return err
-		}
-
-		// Create a CloudWatch Log Stream
-		glueLogStream, err := cloudwatch.NewLogStream(ctx, "glueLogStream", &cloudwatch.LogStreamArgs{
-			LogGroupName: glueLogGroup.Name,
-		})
-		if err != nil {
-			return err
-		}
 		// Create Glue catalog table
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: catalogDatabase.Name,
@@ -75,8 +62,6 @@ func main() {
 				"projection.date.interval":      pulumi.String("1"),
 				"projection.date.interval.unit": pulumi.String("DAYS"),
 				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=$${date}", s3Bucket.ID()),
-				"cloudwatch_log_group_arn":      glueLogGroup.Arn,
-				"cloudwatch_log_stream_name":    glueLogStream.Name,
 			},
 			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
 				Columns: glue.CatalogTableStorageDescriptorColumnArray{
@@ -264,7 +249,7 @@ func main() {
 
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
-			Name: pulumi.String("firehoseDeliveryStreamRole"),
+			Name: pulumi.String("tfm-diego-firehose-role"),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
@@ -286,7 +271,14 @@ func main() {
 		if err != nil {
 			return err
 		}
-
+		// Attach the AmazonKinesisFirehoseFullAccess policy to the Firehose role
+		_, err = iam.NewRolePolicyAttachment(ctx, "firehoseRolePolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			Role:      firehoseRole.Name,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonKinesisFirehoseFullAccess"),
+		})
+		if err != nil {
+			return err
+		}
 		// Attach Glue CatalogRead policy to the IAM role
 		lambdaExecFirehose, err := iam.NewPolicy(ctx, "lambdaExecFirehose", &iam.PolicyArgs{
 			Tags: pulumi.StringMap{
