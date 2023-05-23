@@ -67,75 +67,77 @@ func main() {
 			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
 				Columns: glue.CatalogTableStorageDescriptorColumnArray{
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Name: pulumi.String("timestamp"),
-						Type: pulumi.String("string"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Name: pulumi.String("process_id"),
-						Type: pulumi.String("string"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Ip address of the client"),
-						Name:    pulumi.String("source_address"),
+						Name:    pulumi.String("ip1"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Ip address of the server"),
-						Name:    pulumi.String("destination_address"),
+						Name:    pulumi.String("ip2"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Timestamp of the request"),
-						Name:    pulumi.String("request_timestamp"),
+						Name:    pulumi.String("timestamp"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Nombre del frontend"),
-						Name:    pulumi.String("frontend_name"),
+						Comment: pulumi.String("Request section"),
+						Name:    pulumi.String("section"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Nombre del backend"),
-						Name:    pulumi.String("backend_name"),
+						Comment: pulumi.String("Resource requested"),
+						Name:    pulumi.String("resource"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Nombre del servidor"),
-						Name:    pulumi.String("server_name"),
+						Comment: pulumi.String("Protocol used"),
+						Name:    pulumi.String("values"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Timings de la request"),
-						Name:    pulumi.String("timings"),
-						Type:    pulumi.String("string"),
-					},
-					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Código de estado de la request"),
+						Comment: pulumi.String("Status code of the request"),
 						Name:    pulumi.String("status_code"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Size of the request"),
+						Name:    pulumi.String("size"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Dash1"),
+						Name:    pulumi.String("dash1"),
+						Type:    pulumi.String("string"),
+					},
+					&glue.CatalogTableStorageDescriptorColumnArgs{
+						Comment: pulumi.String("Dash2"),
+						Name:    pulumi.String("dash2"),
 						Type:    pulumi.String("int"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Cantidad de bytes transferidos"),
-						Name:    pulumi.String("bytes_read"),
+						Comment: pulumi.String("Flags"),
+						Name:    pulumi.String("flags"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Cantidad de conexiones"),
-						Name:    pulumi.String("connection_times"),
+						Comment: pulumi.String("Values2"),
+						Name:    pulumi.String("values2"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Tiempo de la sesion"),
-						Name:    pulumi.String("session_times"),
+						Comment: pulumi.String("Values3"),
+						Name:    pulumi.String("values3"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("User agent de la request"),
+						Comment: pulumi.String("Request user agent"),
 						Name:    pulumi.String("user_agent"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Tipo de request"),
+						Comment: pulumi.String("Request type"),
 						Name:    pulumi.String("request"),
 						Type:    pulumi.String("string"),
 					},
