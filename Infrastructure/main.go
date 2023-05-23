@@ -511,6 +511,60 @@ func main() {
 			return err
 		}
 
+		// Create an IAM role for Athena
+		athenaRole, err := iam.NewRole(ctx, "athenaRole", &iam.RoleArgs{
+			AssumeRolePolicy: pulumi.String(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": "sts:AssumeRole",
+                        "Principal": {
+                            "Service": "athena.amazonaws.com"
+                        },
+                        "Effect": "Allow",
+                        "Sid": ""
+                    }
+                ]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create IAM policy for S3 bucket and Athena access
+		athenaPolicy, err := iam.NewPolicy(ctx, "athenaAccessPolicy", &iam.PolicyArgs{
+			Policy: pulumi.Sprintf(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            "%s",
+                            "%s/*"
+                        ]
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": "athena:*",
+                        "Resource": "*"
+                    }
+                ]
+            }`, s3Bucket.Arn, s3Bucket.Arn),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach IAM policy to the created role
+		_, err = iam.NewRolePolicyAttachment(ctx, "athenaAccessPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: athenaPolicy.Arn,
+			Role:      athenaRole.Name,
+		})
+
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
