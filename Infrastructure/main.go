@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/athena"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
@@ -501,6 +502,15 @@ func main() {
 			return err
 		}
 
+		// Create an Athena database
+		athenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
+			Name:   pulumi.String("tfm-diego-athena-db"),
+			Bucket: s3Bucket.Bucket,
+		})
+		if err != nil {
+			return err
+		}
+
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
@@ -511,6 +521,7 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("logGroupName", logGroup.Name)
+		ctx.Export("athenaDatabaseName", athenaDatabase.Name)
 
 		return nil
 	})
