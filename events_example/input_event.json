@@ -1,0 +1,32 @@
+{
+  "invocationId": "cf0eaaac-95b2-4936-9cdf-761833f6d502",
+  "sourceKinesisStreamArn": "arn:aws:kinesis:us-east-1:123456789:stream/tfm-stream",
+  "deliveryStreamArn": "arn:aws:firehose:us-east-1:123456789:deliverystream/tfm-firehose-stream",
+  "region": "us-east-1",
+  "records": [
+    {
+      "recordId": "49640991670904849066977518787585217552622313461199667202000000",
+      "approximateArrivalTimestamp": 1684739184057,
+      "data": "dataencrypedbase64",
+      "kinesisRecordMetadata": {
+        "sequenceNumber": "49640991670904849066977518787585217552622313461199667202",
+        "subsequenceNumber": 0,
+        "partitionKey": "20ec9420ea65dc1dcf9982968117a0a0",
+        "shardId": "shardId-000000000000",
+        "approximateArrivalTimestamp": 1684739184057
+      }
+    },
+    {
+      "recordId": "49640991670904849066977518787586426478441928090374373378000000",
+      "approximateArrivalTimestamp": 1684739184057,
+      "data": "otherdataencrypedbase64",
+      "kinesisRecordMetadata": {
+        "sequenceNumber": "49640991670904849066977518787586426478441928090374373378",
+        "subsequenceNumber": 0,
+        "partitionKey": "9b0136fc3f5c5181b508b744754536b6",
+        "shardId": "shardId-000000000000",
+        "approximateArrivalTimestamp": 1684739184057
+      }
+    }
+  ]
+}

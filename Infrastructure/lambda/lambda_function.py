@@ -3,64 +3,80 @@ import base64
 import json
 
 
-def parse_line(line):
-    pattern = r'^(\w+\s\d+\s\d{2}:\d{2}:\d{2})\s\w+\[(\d+)\]:\s([\d.]+:\d+)\s([\d.]+:\d+)\s\[(\d+\/\w+\/\d+:\d{2}:\d{2}:\d{2}\.\d+)\]\s(\w+)\s(\w+)\/(\w+)\s(\d+\/\d+\/\d+\/\d+\/\d+)\s(\d+)\s(\d+)\s-\s-\s--\w+\s(\d+\/\d+\/\d+\/\d+\/\d+)\s(\d+\/\d+)\s\{(.*?)\}\s"(.*?)"$'
-    match = re.match(pattern, line)
-    if match:
-        timestamp = match.group(1)
-        process_id = match.group(2)
-        source_address = match.group(3)
-        destination_address = match.group(4)
-        request_timestamp = match.group(5)
-        frontend_name = match.group(6)
-        backend_name = match.group(7)
-        server_name = match.group(8)
-        timings = match.group(9)
-        status_code = match.group(10)
-        bytes_read = match.group(11)
-        connection_times = match.group(12)
-        session_times = match.group(13)
-        user_agent = match.group(14)
-        request = match.group(15)
+def parse_log(log):
+    # Define the regular expression pattern
+    pattern = r'^(\S+) (\S+) \[(.*?)\] (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) \{(.*?)\} "(.*?)"$'
 
-        return {
-            "timestamp": timestamp,
-            "process_id": process_id,
-            "source_address": source_address,
-            "destination_address": destination_address,
-            "request_timestamp": request_timestamp,
-            "frontend_name": frontend_name,
-            "backend_name": backend_name,
-            "server_name": server_name,
-            "timings": timings,
-            "status_code": status_code,
-            "bytes_read": bytes_read,
-            "connection_times": connection_times,
-            "session_times": session_times,
-            "user_agent": user_agent,
-            "request": request,
+    # Match the pattern against the log string
+    match = re.match(pattern, log)
+
+    if match:
+        # Extract the desired information from the matched groups
+        ip1 = match.group(1)  # 127.0.0.1:4398
+        ip2 = match.group(2)  # 127.0.0.1:80
+        timestamp = match.group(3)  # 22/May/2023:03:06:13.724
+        section = match.group(4)  # main
+        resource = match.group(5)  # wsx/ws5
+        values = match.group(6)  # 0/0/0/4/4
+        status_code = match.group(7)  # 200
+        size = match.group(8)  # 237
+        dash1 = match.group(9)  # -
+        dash2 = match.group(10)  # -
+        flags = match.group(11)  # --NN
+        values2 = match.group(12)  # 1/1/0/0/0
+        values3 = match.group(13)  # 0/0
+        user_agent = match.group(14)  # localhost|curl/7.29.0
+        request = match.group(15)  # GET / HTTP/1.1
+
+        # Create a dictionary with the extracted fields
+        log_fields = {
+            "IP1": ip1,
+            "IP2": ip2,
+            "Timestamp": timestamp,
+            "Section": section,
+            "Resource": resource,
+            "Values": values,
+            "Status Code": status_code,
+            "Size": size,
+            "Dash1": dash1,
+            "Dash2": dash2,
+            "Flags": flags,
+            "Values2": values2,
+            "Values3": values3,
+            "User Agent": user_agent,
+            "Request": request,
         }
+
+        return log_fields
     else:
         return None
 
 
 def lambda_handler(event, context):
     output_records = []
-    print("Input event:")
-    print(event)
     for record in event["records"]:
         payload = base64.b64decode(record["data"]).decode("utf-8")
-        print("Input payload:")
-        print(payload)
         # Parse each line of the payload
         parsed_data = []
-        for line in payload.splitlines():
-            parsed_line = parse_line(line)
-            if parsed_line:
-                parsed_data.append(parsed_line)
-
+        # Load string as a json object
+        payload_json = json.loads(payload)
+        # Get the message from the json object
+        payload = payload_json["message"]
+        # for line in payload.splitlines():
+        #     parsed_log = parse_log(line)
+        #     print("Parsed line:")
+        #     print(parsed_log)
+        #     if parsed_log:
+        #         parsed_data.append(parsed_log)
+        #         print("Parsed data:")
+        #         print(parsed_data)
+        parsed_log = parse_log(payload)
+        print(parsed_log)
+        output_payload = json.dumps(parsed_log)
         # Convert parsed data to JSON and add to output records
-        output_payload = json.dumps(parsed_data)
+        # output_payload = json.dumps(parsed_data)
+        print("Output payload:")
+        print(output_payload)
         output_records.append(
             {
                 "recordId": record["recordId"],
@@ -70,8 +86,6 @@ def lambda_handler(event, context):
                 ),
             }
         )
-        print("Output payload:")
-        print(output_payload)
         print("Output records:")
         print(output_records)
     return {"records": output_records}

@@ -1,0 +1,6 @@
+{
+    "host": "localhost",
+    "ident": "haproxy",
+    "pid": "29216",
+    "message": "127.0.0.1:4398 127.0.0.1:80 [22/May/2023:03:06:13.724] main wsx/ws5 0/0/0/4/4 200 237 - - --NN 1/1/0/0/0 0/0 {localhost|curl/7.29.0} \"GET / HTTP/1.1\""
+}
