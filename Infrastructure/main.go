@@ -114,7 +114,7 @@ func main() {
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Dash2"),
 						Name:    pulumi.String("dash2"),
-						Type:    pulumi.String("int"),
+						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Flags"),

@@ -36,14 +36,14 @@ def parse_log(log):
             "Section": section,
             "Resource": resource,
             "Values": values,
-            "Status Code": status_code,
+            "Status_Code": status_code,
             "Size": size,
             "Dash1": dash1,
             "Dash2": dash2,
             "Flags": flags,
             "Values2": values2,
             "Values3": values3,
-            "User Agent": user_agent,
+            "User_Agent": user_agent,
             "Request": request,
         }
 
@@ -62,14 +62,6 @@ def lambda_handler(event, context):
         payload_json = json.loads(payload)
         # Get the message from the json object
         payload = payload_json["message"]
-        # for line in payload.splitlines():
-        #     parsed_log = parse_log(line)
-        #     print("Parsed line:")
-        #     print(parsed_log)
-        #     if parsed_log:
-        #         parsed_data.append(parsed_log)
-        #         print("Parsed data:")
-        #         print(parsed_data)
         parsed_log = parse_log(payload)
         print(parsed_log)
         output_payload = json.dumps(parsed_log)
