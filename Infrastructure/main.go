@@ -564,7 +564,9 @@ func main() {
 			PolicyArn: athenaPolicy.Arn,
 			Role:      athenaRole.Name,
 		})
-
+		if err != nil {
+			return err
+		}
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
