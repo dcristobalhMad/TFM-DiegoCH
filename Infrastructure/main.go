@@ -504,7 +504,7 @@ func main() {
 
 		// Create an Athena database
 		athenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
-			Name:   pulumi.String("tfm-diego-athena-db"),
+			Name:   pulumi.String("tfm_diego_athenadb"),
 			Bucket: s3Bucket.Bucket,
 		})
 		if err != nil {
