@@ -225,6 +225,10 @@ func main() {
 		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
 			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
 			RetentionInDays: pulumi.Int(1),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
@@ -414,6 +418,10 @@ func main() {
 		firehoseLogGroup, err := cloudwatch.NewLogGroup(ctx, "firehoseLogGroup", &cloudwatch.LogGroupArgs{
 			Name:            pulumi.String("/aws/kinesisfirehose/tfm-firehose-stream"),
 			RetentionInDays: pulumi.Int(1),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
@@ -502,67 +510,57 @@ func main() {
 			return err
 		}
 
+		// Create an S3 bucket
+		s3AthenaBucket, err := s3.NewBucket(ctx, "tfm-diego-athena", nil)
+		if err != nil {
+			return err
+		}
+
+		// Create an Athena workgroup
+		tfmdiegoworkgroup, err := athena.NewWorkgroup(ctx, "tfmdiegoworkgroup", &athena.WorkgroupArgs{
+			Name:        pulumi.String("tfmdiegoworkgroup"),
+			Description: pulumi.String("Athena workgroup for running queries"),
+			State:       pulumi.String("ENABLED"),
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create an Athena database
-		athenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
-			Name:   pulumi.String("tfm_diego_athenadb"),
-			Bucket: s3Bucket.Bucket,
+		tfmathenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
+			Name:         pulumi.String("tfm_diego_athenadb"),
+			Bucket:       s3AthenaBucket.Bucket,
+			ForceDestroy: pulumi.Bool(true),
 		})
 		if err != nil {
 			return err
 		}
 
-		// Create an IAM role for Athena
-		athenaRole, err := iam.NewRole(ctx, "athenaRole", &iam.RoleArgs{
-			AssumeRolePolicy: pulumi.String(`{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Action": "sts:AssumeRole",
-                        "Principal": {
-                            "Service": "athena.amazonaws.com"
-                        },
-                        "Effect": "Allow",
-                        "Sid": ""
-                    }
-                ]
-            }`),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Create IAM policy for S3 bucket and Athena access
-		athenaPolicy, err := iam.NewPolicy(ctx, "athenaAccessPolicy", &iam.PolicyArgs{
-			Policy: pulumi.Sprintf(`{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:GetObject",
-                            "s3:ListBucket"
-                        ],
-                        "Resource": [
-                            "%s",
-                            "%s/*"
-                        ]
-                    },
-                    {
-                        "Effect": "Allow",
-                        "Action": "athena:*",
-                        "Resource": "*"
-                    }
-                ]
-            }`, s3Bucket.Arn, s3Bucket.Arn),
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach IAM policy to the created role
-		_, err = iam.NewRolePolicyAttachment(ctx, "athenaAccessPolicyAttachment", &iam.RolePolicyAttachmentArgs{
-			PolicyArn: athenaPolicy.Arn,
-			Role:      athenaRole.Name,
+		// Create an Athena named query
+		tfmnamedQuery, err := athena.NewNamedQuery(ctx, "tfmnamedQuery", &athena.NamedQueryArgs{
+			Name: pulumi.String("query_from_logs"),
+			Query: pulumi.String(`CREATE EXTERNAL TABLE IF NOT EXISTS tfm_diego_athenadb.tfm_diego_athenatable (
+				client_ip string,
+				server_ip string,
+				timestamp string,
+				virtual_host string,
+				server string,
+				status_code string,
+				response_size string,
+				referrer string,
+				header_user_agent string,
+				ssl_information string,
+				ssl_stats string,
+				server_stats string,
+				user_agent string,
+				http_request string
+			  )
+			  ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
+			  STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+			  LOCATION 's3://tfm-diego-datalake-e2f5c09/events/'
+			  TBLPROPERTIES ('classification' = 'parquet');`),
+			Database:  tfmathenaDatabase.Name,
+			Workgroup: tfmdiegoworkgroup.Name,
 		})
 		if err != nil {
 			return err
@@ -577,7 +575,9 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("logGroupName", logGroup.Name)
-		ctx.Export("athenaDatabaseName", athenaDatabase.Name)
+		ctx.Export("athenaDatabaseName", tfmathenaDatabase.Name)
+		ctx.Export("athenaWorkgroupName", tfmdiegoworkgroup.Name)
+		ctx.Export("tfmnamedQuery", tfmnamedQuery.Name)
 
 		return nil
 	})
