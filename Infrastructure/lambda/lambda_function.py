@@ -71,6 +71,4 @@ def lambda_handler(event, context):
                 ),
             }
         )
-        print("Output records:")
-        print(output_records)
     return {"records": output_records}

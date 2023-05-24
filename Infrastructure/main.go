@@ -100,7 +100,7 @@ func main() {
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Status code of the request"),
 						Name:    pulumi.String("Status_Code"),
-						Type:    pulumi.String("int"),
+						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Size of the request"),
