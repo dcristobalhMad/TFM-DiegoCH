@@ -225,6 +225,10 @@ func main() {
 		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
 			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
 			RetentionInDays: pulumi.Int(1),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
@@ -414,6 +418,10 @@ func main() {
 		firehoseLogGroup, err := cloudwatch.NewLogGroup(ctx, "firehoseLogGroup", &cloudwatch.LogGroupArgs{
 			Name:            pulumi.String("/aws/kinesisfirehose/tfm-firehose-stream"),
 			RetentionInDays: pulumi.Int(1),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
