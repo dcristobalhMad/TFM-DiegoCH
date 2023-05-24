@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/athena"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
@@ -536,6 +537,7 @@ func main() {
 			return err
 		}
 
+		time.Sleep(15 * time.Second) // Wait for the database to be created
 		// Create an Athena named query
 		tfmnamedQuery, err := athena.NewNamedQuery(ctx, "tfmnamedQuery", &athena.NamedQueryArgs{
 			Name: pulumi.String("query_from_logs"),
@@ -561,7 +563,7 @@ func main() {
 			  TBLPROPERTIES ('classification' = 'parquet');`),
 			Database:  tfmathenaDatabase.Name,
 			Workgroup: tfmdiegoworkgroup.Name,
-		})
+		}, pulumi.DependsOn([]pulumi.Resource{tfmathenaDatabase}))
 		if err != nil {
 			return err
 		}
