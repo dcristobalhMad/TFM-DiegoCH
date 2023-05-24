@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/athena"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
@@ -65,6 +64,12 @@ func main() {
 				"projection.date.interval":      pulumi.String("1"),
 				"projection.date.interval.unit": pulumi.String("DAYS"),
 				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=$${date}", s3Bucket.ID()),
+			},
+			PartitionKeys: glue.CatalogTablePartitionKeyArray{
+				&glue.CatalogTablePartitionKeyArgs{
+					Name: pulumi.String("date"),
+					Type: pulumi.String("string"),
+				},
 			},
 			StorageDescriptor: &glue.CatalogTableStorageDescriptorArgs{
 				Columns: glue.CatalogTableStorageDescriptorColumnArray{
@@ -529,53 +534,19 @@ func main() {
 			Description:  pulumi.String("Athena workgroup for running queries"),
 			State:        pulumi.String("ENABLED"),
 			ForceDestroy: pulumi.Bool(true),
+			Configuration: &athena.WorkgroupConfigurationArgs{
+				ResultConfiguration: &athena.WorkgroupConfigurationResultConfigurationArgs{
+					OutputLocation: pulumi.Sprintf("s3://%s/query-results/", s3AthenaBucket.ID()),
+				},
+			},
 		})
 		if err != nil {
 			return err
 		}
 
-		// Create an Athena database
-		tfmathenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
-			Name:         pulumi.String("tfm_diego_athenadb"),
-			Bucket:       s3AthenaBucket.Bucket,
-			ForceDestroy: pulumi.Bool(true),
-		})
-		if err != nil {
-			return err
-		}
-
-		time.Sleep(15 * time.Second) // Wait for the database to be created
-		// Create an Athena named query
-		tfmnamedQuery, err := athena.NewNamedQuery(ctx, "tfmnamedQuery", &athena.NamedQueryArgs{
-			Name: pulumi.String("query_from_logs"),
-			Query: pulumi.String(`CREATE EXTERNAL TABLE IF NOT EXISTS tfm_diego_athenadb.tfm_diego_athenatable (
-				client_ip string,
-				server_ip string,
-				timestamp string,
-				virtual_host string,
-				server string,
-				status_code string,
-				response_size string,
-				referrer string,
-				header_user_agent string,
-				ssl_information string,
-				ssl_stats string,
-				server_stats string,
-				user_agent string,
-				http_request string
-			  )
-			  ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
-			  STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
-			  LOCATION 's3://tfm-diego-datalake-e2f5c09/events/'
-			  TBLPROPERTIES ('classification' = 'parquet');`),
-			Database:  tfmathenaDatabase.Name,
-			Workgroup: tfmdiegoworkgroup.Name,
-		}, pulumi.DependsOn([]pulumi.Resource{tfmathenaDatabase}))
-		if err != nil {
-			return err
-		}
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
+		ctx.Export("bucketNameAthena", s3AthenaBucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
 		ctx.Export("dataTransformLambdaName", dataTransformLambda.Name)
 		ctx.Export("firehoseDeliveryStreamName", firehoseStream.Name)
@@ -584,9 +555,7 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("logGroupName", logGroup.Name)
-		ctx.Export("athenaDatabaseName", tfmathenaDatabase.Name)
 		ctx.Export("athenaWorkgroupName", tfmdiegoworkgroup.Name)
-		ctx.Export("tfmnamedQuery", tfmnamedQuery.Name)
 
 		return nil
 	})
