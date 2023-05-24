@@ -512,16 +512,23 @@ func main() {
 		}
 
 		// Create an S3 bucket
-		s3AthenaBucket, err := s3.NewBucket(ctx, "tfm-diego-athena", nil)
+		s3AthenaBucket, err := s3.NewBucket(ctx, "tfm-diego-athena", &s3.BucketArgs{
+			ForceDestroy: pulumi.Bool(true),
+			Acl:          pulumi.String("private"),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			}})
 		if err != nil {
 			return err
 		}
 
 		// Create an Athena workgroup
 		tfmdiegoworkgroup, err := athena.NewWorkgroup(ctx, "tfmdiegoworkgroup", &athena.WorkgroupArgs{
-			Name:        pulumi.String("tfmdiegoworkgroup"),
-			Description: pulumi.String("Athena workgroup for running queries"),
-			State:       pulumi.String("ENABLED"),
+			Name:         pulumi.String("tfmdiegoworkgroup"),
+			Description:  pulumi.String("Athena workgroup for running queries"),
+			State:        pulumi.String("ENABLED"),
+			ForceDestroy: pulumi.Bool(true),
 		})
 		if err != nil {
 			return err
