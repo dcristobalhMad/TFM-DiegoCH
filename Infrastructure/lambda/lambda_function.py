@@ -30,21 +30,21 @@ def parse_log(log):
 
         # Create a dictionary with the extracted fields
         log_fields = {
-            "IP1": ip1,
-            "IP2": ip2,
+            "Client_IP": ip1,
+            "Server_IP": ip2,
             "Timestamp": timestamp,
-            "Section": section,
-            "Resource": resource,
-            "Values": values,
+            "Virtual_Host": section,
+            "Server": resource,
+            "Stats": values,
             "Status_Code": status_code,
-            "Size": size,
-            "Dash1": dash1,
-            "Dash2": dash2,
-            "Flags": flags,
-            "Values2": values2,
-            "Values3": values3,
+            "Response_Size": size,
+            "Referrer": dash1,
+            "Header_user_agent": dash2,
+            "SSL_information": flags,
+            "SSL_stats": values2,
+            "Server_stats": values3,
             "User_Agent": user_agent,
-            "Request": request,
+            "HTTP_Request": request,
         }
 
         return log_fields
@@ -56,19 +56,12 @@ def lambda_handler(event, context):
     output_records = []
     for record in event["records"]:
         payload = base64.b64decode(record["data"]).decode("utf-8")
-        # Parse each line of the payload
-        parsed_data = []
         # Load string as a json object
         payload_json = json.loads(payload)
         # Get the message from the json object
         payload = payload_json["message"]
         parsed_log = parse_log(payload)
-        print(parsed_log)
         output_payload = json.dumps(parsed_log)
-        # Convert parsed data to JSON and add to output records
-        # output_payload = json.dumps(parsed_data)
-        print("Output payload:")
-        print(output_payload)
         output_records.append(
             {
                 "recordId": record["recordId"],

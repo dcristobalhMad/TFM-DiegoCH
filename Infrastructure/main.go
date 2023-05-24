@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/athena"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
@@ -68,77 +69,77 @@ func main() {
 				Columns: glue.CatalogTableStorageDescriptorColumnArray{
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Ip address of the client"),
-						Name:    pulumi.String("ip1"),
+						Name:    pulumi.String("Client_IP"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Ip address of the server"),
-						Name:    pulumi.String("ip2"),
+						Name:    pulumi.String("Server_IP"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Timestamp of the request"),
-						Name:    pulumi.String("timestamp"),
+						Name:    pulumi.String("Timestamp"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Request section"),
-						Name:    pulumi.String("section"),
+						Comment: pulumi.String("Virtual host requested"),
+						Name:    pulumi.String("Virtual_Host"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Resource requested"),
-						Name:    pulumi.String("resource"),
+						Name:    pulumi.String("Server"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Protocol used"),
-						Name:    pulumi.String("values"),
+						Name:    pulumi.String("Stats"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Status code of the request"),
-						Name:    pulumi.String("status_code"),
-						Type:    pulumi.String("string"),
+						Name:    pulumi.String("Status_Code"),
+						Type:    pulumi.String("int"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Size of the request"),
-						Name:    pulumi.String("size"),
+						Name:    pulumi.String("Response_Size"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Dash1"),
-						Name:    pulumi.String("dash1"),
+						Comment: pulumi.String("Referrer of the request"),
+						Name:    pulumi.String("Referrer"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Dash2"),
-						Name:    pulumi.String("dash2"),
+						Comment: pulumi.String("Header user agent"),
+						Name:    pulumi.String("Header_user_agent"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Flags"),
-						Name:    pulumi.String("flags"),
+						Comment: pulumi.String("SSL protocol used"),
+						Name:    pulumi.String("SSL_information"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Values2"),
-						Name:    pulumi.String("values2"),
+						Comment: pulumi.String("SSL information"),
+						Name:    pulumi.String("SSL_stats"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
-						Comment: pulumi.String("Values3"),
-						Name:    pulumi.String("values3"),
+						Comment: pulumi.String("Server statistics"),
+						Name:    pulumi.String("Server_stats"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Request user agent"),
-						Name:    pulumi.String("user_agent"),
+						Name:    pulumi.String("User_Agent"),
 						Type:    pulumi.String("string"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Request type"),
-						Name:    pulumi.String("request"),
+						Name:    pulumi.String("HTTP_Request"),
 						Type:    pulumi.String("string"),
 					},
 				},
@@ -501,6 +502,71 @@ func main() {
 			return err
 		}
 
+		// Create an Athena database
+		athenaDatabase, err := athena.NewDatabase(ctx, "athenaDatabase", &athena.DatabaseArgs{
+			Name:   pulumi.String("tfm_diego_athenadb"),
+			Bucket: s3Bucket.Bucket,
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create an IAM role for Athena
+		athenaRole, err := iam.NewRole(ctx, "athenaRole", &iam.RoleArgs{
+			AssumeRolePolicy: pulumi.String(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": "sts:AssumeRole",
+                        "Principal": {
+                            "Service": "athena.amazonaws.com"
+                        },
+                        "Effect": "Allow",
+                        "Sid": ""
+                    }
+                ]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create IAM policy for S3 bucket and Athena access
+		athenaPolicy, err := iam.NewPolicy(ctx, "athenaAccessPolicy", &iam.PolicyArgs{
+			Policy: pulumi.Sprintf(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            "%s",
+                            "%s/*"
+                        ]
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": "athena:*",
+                        "Resource": "*"
+                    }
+                ]
+            }`, s3Bucket.Arn, s3Bucket.Arn),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach IAM policy to the created role
+		_, err = iam.NewRolePolicyAttachment(ctx, "athenaAccessPolicyAttachment", &iam.RolePolicyAttachmentArgs{
+			PolicyArn: athenaPolicy.Arn,
+			Role:      athenaRole.Name,
+		})
+		if err != nil {
+			return err
+		}
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("kinesisDataStreamName", dataStream.Name)
@@ -511,6 +577,7 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("logGroupName", logGroup.Name)
+		ctx.Export("athenaDatabaseName", athenaDatabase.Name)
 
 		return nil
 	})
