@@ -51,7 +51,7 @@ func main() {
 		// Create Glue catalog table
 		catalogTable, err := glue.NewCatalogTable(ctx, "awsGlueCatalogTable", &glue.CatalogTableArgs{
 			DatabaseName: catalogDatabase.Name,
-			Name:         pulumi.String("tfmttable"),
+			Name:         pulumi.String("tfmdiegotable"),
 			Description:  pulumi.String("An example Glue Catalog Table with output in Parquet format"),
 			TableType:    pulumi.String("EXTERNAL_TABLE"),
 			Parameters: pulumi.StringMap{
@@ -63,7 +63,7 @@ func main() {
 				"projection.date.range":         pulumi.String("2022-10-01,NOW"),
 				"projection.date.interval":      pulumi.String("1"),
 				"projection.date.interval.unit": pulumi.String("DAYS"),
-				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=$${date}", s3Bucket.ID()),
+				"storage.location.template":     pulumi.Sprintf("s3://%s/events/date=${date}", s3Bucket.ID()),
 			},
 			PartitionKeys: glue.CatalogTablePartitionKeyArray{
 				&glue.CatalogTablePartitionKeyArgs{
