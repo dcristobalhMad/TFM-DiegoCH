@@ -478,6 +478,10 @@ func main() {
 					OutputLocation: pulumi.Sprintf("s3://%s/query-results/", s3AthenaBucket.ID()),
 				},
 			},
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
 		})
 		if err != nil {
 			return err
