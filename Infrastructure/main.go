@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/athena"
-	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/glue"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/kinesis"
@@ -227,40 +226,6 @@ func main() {
 			return err
 		}
 
-		// Create a Cloudwatch Log Group for the Lambda Function
-		logGroup, err := cloudwatch.NewLogGroup(ctx, "tfmdiegoLogGroup", &cloudwatch.LogGroupArgs{
-			Name:            pulumi.Sprintf("/aws/lambda/%s", dataTransformLambda.Name),
-			RetentionInDays: pulumi.Int(1),
-			Tags: pulumi.StringMap{
-				"Env":  pulumi.String("test"),
-				"Name": pulumi.String("tfm-diego"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		// Attach the Inline Policy for specific LogGroup access
-		_, err = iam.NewRolePolicy(ctx, "allowLambdaLoggingToSpecificLogGroup", &iam.RolePolicyArgs{
-			Role: lambdaRole.Name,
-			Policy: pulumi.Sprintf(`{
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Action": [
-                                "logs:CreateLogStream",
-                                "logs:PutLogEvents"
-                            ],
-                            "Resource": "%s"
-                        }
-                    ]
-                }`, logGroup.Arn),
-		})
-		if err != nil {
-			return err
-		}
-
 		// Create a Kinesis Firehose IAM role
 		firehoseRole, err := iam.NewRole(ctx, "firehoseDeliveryStreamRole", &iam.RoleArgs{
 			Name: pulumi.String("tfm-diego-firehose-role"),
@@ -340,7 +305,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		/////////////////////////
+
 		// Attach Glue CatalogRead policy to the IAM role
 		readGluePolicy, err := iam.NewPolicy(ctx, "myReadGluePolicy", &iam.PolicyArgs{
 			Tags: pulumi.StringMap{
@@ -420,27 +385,6 @@ func main() {
 			return err
 		}
 
-		// Create a Cloudwatch Log Group for the kinesis firehose
-		firehoseLogGroup, err := cloudwatch.NewLogGroup(ctx, "firehoseLogGroup", &cloudwatch.LogGroupArgs{
-			Name:            pulumi.String("/aws/kinesisfirehose/tfm-firehose-stream"),
-			RetentionInDays: pulumi.Int(1),
-			Tags: pulumi.StringMap{
-				"Env":  pulumi.String("test"),
-				"Name": pulumi.String("tfm-diego"),
-			},
-		})
-		if err != nil {
-			return err
-		}
-		// Create a CloudWatch Log Stream
-		_, err = cloudwatch.NewLogStream(ctx, "firehoseLogStream", &cloudwatch.LogStreamArgs{
-			Name:         pulumi.String("tfm-firehose-stream"),
-			LogGroupName: firehoseLogGroup.Name,
-		})
-		if err != nil {
-			return err
-		}
-
 		// Create a Kinesis Firehose Delivery Stream with data transformation Lambda
 		firehoseStream, err := kinesis.NewFirehoseDeliveryStream(ctx, "firehoseDeliveryStream", &kinesis.FirehoseDeliveryStreamArgs{
 			Destination: pulumi.String("extended_s3"),
@@ -461,11 +405,6 @@ func main() {
 				CompressionFormat: pulumi.String("UNCOMPRESSED"),
 				Prefix:            pulumi.String("events/date=!{timestamp:yyyy}-!{timestamp:MM}-!{timestamp:dd}/"),
 				ErrorOutputPrefix: pulumi.String("events_error/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}/"),
-				CloudwatchLoggingOptions: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationCloudwatchLoggingOptionsArgs{
-					Enabled:       pulumi.Bool(true),
-					LogGroupName:  firehoseLogGroup.Name,
-					LogStreamName: pulumi.String("tfm-firehose-stream"),
-				},
 				DataFormatConversionConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationArgs{
 					Enabled: pulumi.Bool(true),
 					InputFormatConfiguration: &kinesis.FirehoseDeliveryStreamExtendedS3ConfigurationDataFormatConversionConfigurationInputFormatConfigurationArgs{
@@ -554,7 +493,6 @@ func main() {
 		ctx.Export("firehoseRoleName", firehoseRole.Name)
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
-		ctx.Export("logGroupName", logGroup.Name)
 		ctx.Export("athenaWorkgroupName", tfmdiegoworkgroup.Name)
 
 		return nil
