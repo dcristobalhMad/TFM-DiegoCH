@@ -30,7 +30,7 @@ La carpeta principal donde se encuentra el código de la infraestructura es la c
 
 También se puede realizar el proceso en local, para ello se ha creado un Makefile con los siguientes comandos:
 
-- Compilación de la lambda: `make build-lambda`
+- Paquetización de la lambda: `make build-lambda`
 - Plan/preview de la infraestructura: `make check`
 - Despliegue de la infraestructura: `make deploy`
 - Destrucción de la infraestructura: `make destroy`
