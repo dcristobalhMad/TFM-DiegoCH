@@ -16,7 +16,9 @@ La carpeta principal donde se encuentra el código de la infraestructura es la c
 - Kinesis data streams
 - Kinesis data firehose
 - Lambda
+- Glue
 - S3
+- Athena
 
 ## Flow automático por github actions
 
