@@ -536,6 +536,7 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("athenaWorkgroupName", tfmdiegoworkgroup.Name)
+		ctx.Export("athenaUserName", athenaUser.Name)
 
 		return nil
 	})
