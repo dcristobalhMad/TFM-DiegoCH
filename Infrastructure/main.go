@@ -487,6 +487,45 @@ func main() {
 			return err
 		}
 
+		// Create an IAM user
+		athenaUser, err := iam.NewUser(ctx, "tfmDiegoAthenaUser", &iam.UserArgs{
+			Name:         pulumi.String("tfmDiegoAthenaUser"),
+			ForceDestroy: pulumi.Bool(true),
+			Tags: pulumi.StringMap{
+				"Env":  pulumi.String("test"),
+				"Name": pulumi.String("tfm-diego"),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create an IAM policy with all Athena permissions
+		athenaPolicy, err := iam.NewPolicy(ctx, "athenaPolicy", &iam.PolicyArgs{
+			Policy: pulumi.String(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": "athena:*",
+                        "Effect": "Allow",
+                        "Resource": "arn:aws:athena:*:*:workgroup/tfmdiegoworkgroup"
+                    }
+                ]
+            }`),
+		})
+		if err != nil {
+			return err
+		}
+
+		// Attach the policy to the user
+		_, err = iam.NewUserPolicyAttachment(ctx, "athenaUserPolicyAttachment", &iam.UserPolicyAttachmentArgs{
+			User:      athenaUser.Name,
+			PolicyArn: athenaPolicy.Arn,
+		})
+		if err != nil {
+			return err
+		}
+
 		// Stack exports
 		ctx.Export("bucketName", s3Bucket.Bucket)
 		ctx.Export("bucketNameAthena", s3AthenaBucket.Bucket)
@@ -498,6 +537,7 @@ func main() {
 		ctx.Export("glueDatabaseName", catalogDatabase.Name)
 		ctx.Export("glueTableNameX", catalogTable.Name)
 		ctx.Export("athenaWorkgroupName", tfmdiegoworkgroup.Name)
+		ctx.Export("athenaUserName", athenaUser.Name)
 
 		return nil
 	})
