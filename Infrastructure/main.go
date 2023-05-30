@@ -489,7 +489,8 @@ func main() {
 
 		// Create an IAM user
 		athenaUser, err := iam.NewUser(ctx, "tfmDiegoAthenaUser", &iam.UserArgs{
-			Name: pulumi.String("tfmDiegoAthenaUser"),
+			Name:         pulumi.String("tfmDiegoAthenaUser"),
+			ForceDestroy: pulumi.Bool(true),
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
@@ -507,7 +508,7 @@ func main() {
                     {
                         "Action": "athena:*",
                         "Effect": "Allow",
-                        "Resource": "*"
+                        "Resource": "arn:aws:athena:*:*:workgroup/tfmdiegoworkgroup"
                     }
                 ]
             }`),
