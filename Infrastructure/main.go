@@ -502,16 +502,30 @@ func main() {
 
 		// Create an IAM policy with all Athena permissions
 		athenaPolicy, err := iam.NewPolicy(ctx, "athenaPolicy", &iam.PolicyArgs{
-			Policy: pulumi.String(`{
+			Policy: pulumi.Sprintf(`{
                 "Version": "2012-10-17",
                 "Statement": [
                     {
                         "Action": "athena:*",
                         "Effect": "Allow",
                         "Resource": "arn:aws:athena:*:*:workgroup/tfmdiegoworkgroup"
-                    }
+                    },
+					{
+						"Action": [
+						  "s3:AbortMultipartUpload",
+						  "s3:GetBucketLocation",
+						  "s3:GetObject",
+						  "s3:ListBucket",
+						  "s3:ListBucketMultipartUploads",
+						  "s3:PutObject"
+						],
+						"Resource": [
+						  "%s"
+						],
+						"Effect": "Allow"
+					  }
                 ]
-            }`),
+            }`, s3AthenaBucket.Arn),
 		})
 		if err != nil {
 			return err
