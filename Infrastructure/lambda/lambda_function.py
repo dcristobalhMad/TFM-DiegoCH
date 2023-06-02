@@ -1,6 +1,8 @@
 import re
 import base64
 import json
+from cryptography.fernet import Fernet
+import os
 
 
 def parse_log(log):
@@ -9,11 +11,11 @@ def parse_log(log):
 
     # Match the pattern against the log string
     match = re.match(pattern, log)
-
+    cipher = Fernet(os.environ["KEY"])
     if match:
         # Extract the desired information from the matched groups
         ip1 = match.group(1)  # 127.0.0.1:4398
-        ip2 = match.group(2)  # 127.0.0.1:80
+        ip2 = match.group(2)  # 127.0.0.1:80 THIS IS THE SERVER IP
         timestamp = match.group(3)  # 22/May/2023:03:06:13.724
         section = match.group(4)  # main
         resource = match.group(5)  # wsx/ws5
@@ -25,13 +27,20 @@ def parse_log(log):
         flags = match.group(11)  # --NN
         values2 = match.group(12)  # 1/1/0/0/0
         values3 = match.group(13)  # 0/0
-        user_agent = match.group(14)  # localhost|curl/7.29.0
+        user_agent = match.group(14)
         request = match.group(15)  # GET / HTTP/1.1
+
+        ####################################
+        ### ENCODE THE DATA WITH FERNET ####
+        ####################################
+
+        ip2_enc = cipher.encrypt(ip2.encode())
+        user_agent_enc = cipher.encrypt(user_agent.encode())
 
         # Create a dictionary with the extracted fields
         log_fields = {
             "Client_IP": ip1,
-            "Server_IP": ip2,
+            "Server_IP": ip2_enc,
             "Timestamp": timestamp,
             "Virtual_Host": section,
             "Server": resource,
@@ -43,7 +52,7 @@ def parse_log(log):
             "SSL_information": flags,
             "SSL_stats": values2,
             "Server_stats": values3,
-            "User_Agent": user_agent,
+            "User_Agent": user_agent_enc,
             "HTTP_Request": request,
         }
 
