@@ -545,7 +545,7 @@ func main() {
 						"Effect": "Allow"
 					  }
                 ]
-            }`, s3AthenaBucket.Arn),
+            }`, s3AthenaBucket.Arn, s3AthenaBucket.Arn, s3AthenaBucket.Arn),
 		})
 		if err != nil {
 			return err
