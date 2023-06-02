@@ -512,15 +512,35 @@ func main() {
                     },
 					{
 						"Action": [
-						  "s3:AbortMultipartUpload",
-						  "s3:GetBucketLocation",
-						  "s3:GetObject",
-						  "s3:ListBucket",
-						  "s3:ListBucketMultipartUploads",
-						  "s3:PutObject"
+							"s3:GetBucketLocation",
+							"s3:GetObject",
+							"s3:ListBucket",
+							"s3:ListBucketMultipartUploads",
+							"s3:AbortMultipartUpload",
+							"s3:PutObject",
+							"s3:ListMultipartUploadParts"
 						],
 						"Resource": [
-						  "%s"
+						  "%s",
+						  "%s/*"
+						],
+						"Effect": "Allow"
+					  },
+					  {
+						"Effect": "Allow",
+						"Action": [
+						  "s3:GetObject"
+						],
+						"Resource": [
+						  "%s/query-results/*"
+						]
+					  },
+					  {
+						"Action": [
+						  "glue:*"
+						],
+						"Resource": [
+						  "arn:aws:glue:*:*:*"
 						],
 						"Effect": "Allow"
 					  }
