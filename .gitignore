@@ -1,4 +1,4 @@
-Infrastructure/lambda/*.zip
+Infrastructure/lambda/lambda_function.zip
 .ipynb_checkpoints
 haproxy.log*
 analyze_data/*

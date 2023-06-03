@@ -192,6 +192,18 @@ func main() {
 			return err
 		}
 
+		// First, set up the necessary LayerVersion.
+		cryptoLayer, err := lambda.NewLayerVersion(ctx, "pythonPackagesLayer", &lambda.LayerVersionArgs{
+			Code:      pulumi.NewFileArchive("./lambda/crypto_layer.zip"),
+			LayerName: pulumi.String("python-crypto-layer"),
+			CompatibleRuntimes: pulumi.StringArray{
+				pulumi.String("python3.9"),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
 		// Create a Lambda function for data transformation
 		dataTransformLambda, err := lambda.NewFunction(ctx, "dataTransformLambda", &lambda.FunctionArgs{
 			Runtime: pulumi.String("python3.9"),
@@ -200,6 +212,9 @@ func main() {
 			Handler: pulumi.String("lambda_function.lambda_handler"),
 			Timeout: pulumi.Int(60),
 			Role:    lambdaRole.Arn,
+			Layers: pulumi.StringArray{
+				cryptoLayer.Arn,
+			},
 			Tags: pulumi.StringMap{
 				"Env":  pulumi.String("test"),
 				"Name": pulumi.String("tfm-diego"),
