@@ -11,7 +11,8 @@ def parse_log(log):
 
     # Match the pattern against the log string
     match = re.match(pattern, log)
-    cipher = Fernet(os.environ["KEY"])
+    key = os.environ.get("KEY")
+    cipher = Fernet(key)
     if match:
         # Extract the desired information from the matched groups
         ip1 = match.group(1)  # 127.0.0.1:4398
