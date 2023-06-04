@@ -1,7 +1,6 @@
 import re
 import base64
 import json
-from cryptography.fernet import Fernet
 import os
 
 
