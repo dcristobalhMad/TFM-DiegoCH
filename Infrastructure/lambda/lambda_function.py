@@ -30,7 +30,7 @@ def parse_log(log):
 
         ###### ENCODE VALUES ######
         # Encode the values
-        ip2 = base64.b64encode(ip1.encode("utf-8")).decode("utf-8")
+        ip2 = base64.b64encode(ip2.encode("utf-8")).decode("utf-8")
         user_agent = base64.b64encode(user_agent.encode("utf-8")).decode("utf-8")
 
         # Create a dictionary with the extracted fields
