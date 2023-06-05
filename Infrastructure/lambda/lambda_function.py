@@ -28,6 +28,10 @@ def parse_log(log):
         user_agent = match.group(14)
         request = match.group(15)  # GET / HTTP/1.1
 
+        ###### ENCODE VALUES ######
+        # Encode the values
+        ip2 = base64.b64encode(ip1.encode("utf-8")).decode("utf-8")
+        user_agent = base64.b64encode(user_agent.encode("utf-8")).decode("utf-8")
 
         # Create a dictionary with the extracted fields
         log_fields = {
