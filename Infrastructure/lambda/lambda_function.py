@@ -33,6 +33,11 @@ def parse_log(log):
         ip2 = base64.b64encode(ip2.encode("utf-8")).decode("utf-8")
         user_agent = base64.b64encode(user_agent.encode("utf-8")).decode("utf-8")
 
+        ###### TRANSFORM VALUES ######
+        # Transform the values
+        size = int(size.strip())
+        status_code = int(status_code.strip())
+        
         # Create a dictionary with the extracted fields
         log_fields = {
             "Client_IP": ip1,
