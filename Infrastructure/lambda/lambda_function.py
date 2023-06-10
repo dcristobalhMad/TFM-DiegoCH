@@ -37,7 +37,7 @@ def parse_log(log):
         # Transform the values
         size = int(size.strip())
         status_code = int(status_code.strip())
-        
+        timestamp = timestamp.strip()
         # Create a dictionary with the extracted fields
         log_fields = {
             "Client_IP": ip1,

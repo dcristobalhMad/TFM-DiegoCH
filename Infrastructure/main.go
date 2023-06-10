@@ -85,7 +85,7 @@ func main() {
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Timestamp of the request"),
 						Name:    pulumi.String("Timestamp"),
-						Type:    pulumi.String("string"),
+						Type:    pulumi.String("timestamp"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Virtual host requested"),
