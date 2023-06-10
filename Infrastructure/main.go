@@ -85,7 +85,7 @@ func main() {
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Timestamp of the request"),
 						Name:    pulumi.String("Timestamp"),
-						Type:    pulumi.String("string"),
+						Type:    pulumi.String("timestamp"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Virtual host requested"),
@@ -105,12 +105,12 @@ func main() {
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Status code of the request"),
 						Name:    pulumi.String("Status_Code"),
-						Type:    pulumi.String("string"),
+						Type:    pulumi.String("integer"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Size of the request"),
 						Name:    pulumi.String("Response_Size"),
-						Type:    pulumi.String("string"),
+						Type:    pulumi.String("integer"),
 					},
 					&glue.CatalogTableStorageDescriptorColumnArgs{
 						Comment: pulumi.String("Referrer of the request"),
