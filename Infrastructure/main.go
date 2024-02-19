@@ -167,7 +167,7 @@ func main() {
 			return err
 		}
 
-		// Create a Lambda IAM role
+		// Create a Transform Lambda IAM role
 		lambdaRole, err := iam.NewRole(ctx, "dataTransformLambdaRole", &iam.RoleArgs{
 			Name: pulumi.String("tfm-lambda-role"),
 			Tags: pulumi.StringMap{
